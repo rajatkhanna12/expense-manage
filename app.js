@@ -903,33 +903,7 @@ if (form) {
 // CONTROL UTILITIES & BACKUPS
 // ==========================================
 
-// Load demo mock data
-document.getElementById('btnLoadDemo').addEventListener('click', async function() {
-    if (confirm('Load demo data? This will overwrite your current logs.')) {
-        try {
-            showToast('Loading example logs...', 'info');
-            await apiCall('/api/demo', 'POST');
-            await syncStateFromServer();
-            showToast('Demo mock data loaded successfully!', 'success');
-        } catch (e) {
-            showToast('Failed to load demo data: ' + e.message, 'error');
-        }
-    }
-});
 
-// Reset app
-document.getElementById('btnResetAll').addEventListener('click', async function() {
-    if (confirm('Are you sure you want to delete all logs and reset the app?')) {
-        try {
-            showToast('Deleting all data...', 'info');
-            await apiCall('/api/reset', 'POST');
-            await syncStateFromServer();
-            showToast('All user data reset successfully.', 'success');
-        } catch (e) {
-            showToast('Failed to reset app: ' + e.message, 'error');
-        }
-    }
-});
 
 // JSON Backup Export
 const btnExportJSON = document.getElementById('btnExportJSON');
