@@ -642,6 +642,7 @@ const logCategorySelect = document.getElementById('logCategory');
 
 function updateCategoryOptions() {
     if (!logCategorySelect) return;
+    const prevVal = logCategorySelect.value;
     const type = document.getElementById('logType').value;
     const list = state.categories[type] || [];
     
@@ -652,6 +653,10 @@ function updateCategoryOptions() {
         opt.textContent = cat;
         logCategorySelect.appendChild(opt);
     });
+    
+    if (prevVal && list.includes(prevVal)) {
+        logCategorySelect.value = prevVal;
+    }
 }
 
 function updateAccountDropdowns() {
@@ -659,6 +664,9 @@ function updateAccountDropdowns() {
     const toSelect = document.getElementById('logToAccount');
     
     if (!fromSelect || !toSelect) return;
+    
+    const prevFrom = fromSelect.value;
+    const prevTo = toSelect.value;
     
     fromSelect.innerHTML = '';
     toSelect.innerHTML = '';
@@ -675,6 +683,13 @@ function updateAccountDropdowns() {
         opt2.textContent = nameWithOwner;
         toSelect.appendChild(opt2);
     });
+    
+    if (prevFrom && state.accounts.some(a => a.id === prevFrom)) {
+        fromSelect.value = prevFrom;
+    }
+    if (prevTo && state.accounts.some(a => a.id === prevTo)) {
+        toSelect.value = prevTo;
+    }
 }
 
 // 3-way Form Type Toggle Handler
