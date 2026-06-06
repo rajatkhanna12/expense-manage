@@ -461,9 +461,9 @@ app.get('*', (req, res) => {
 
 // Start Express Server after database initialization
 db.initDatabase().then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`===================================================`);
-        console.log(`FinFlow Server running at http://localhost:${PORT}`);
+        console.log(`FinFlow Server running at http://0.0.0.0:${PORT}`);
         console.log(`===================================================`);
     });
 });
