@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinFlow — Simple Money Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="simple-container">
+        <!-- Header Bar -->
+        <header class="simple-header">
+            <div class="logo">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <h2>FinFlow</h2>
+                <span class="badge-app">Easy Tracker</span>
+            </div>
+            <div class="month-selector">
+                <span>View Month:</span>
+                <select id="reportMonthSelect">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+        </header>
+
+        <!-- KPI Stats Cards -->
+        <div class="kpi-row">
+            <div class="kpi-card income">
+                <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Total Inflow (Income)</span>
+                    <h3 id="lblTotalIncome">₹0.00</h3>
+                </div>
+            </div>
+            <div class="kpi-card expense">
+                <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Total Outflow (Expense)</span>
+                    <h3 id="lblTotalExpenses">₹0.00</h3>
+                </div>
+            </div>
+            <div class="kpi-card savings">
+                <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Net Savings</span>
+                    <h3 id="lblTotalSavings">₹0.00</h3>
+                    <span class="savings-pct" id="lblSavingsPct">0% saved</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Side: Log entry Form -->
+            <div class="col-left">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-pen-to-square"></i> Add New Log</h3>
+                    </div>
+                    <form id="simpleLogForm">
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="logType">Type</label>
+                                <select id="logType" required>
+                                    <option value="expense">Expense (-)</option>
+                                    <option value="income">Income (+)</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="logAmount">Amount (INR)</label>
+                                <input type="number" id="logAmount" min="1" placeholder="₹ Amount" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="logDesc">Description</label>
+                            <input type="text" id="logDesc" placeholder="e.g. Rent, Groceries, Salary" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="logCategory">Category</label>
+                                <select id="logCategory" required>
+                                    <!-- Options updated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="logDate">Date</label>
+                                <input type="date" id="logDate" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            <i class="fa-solid fa-check"></i> Save Entry
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Simple Advisor Tips -->
+                <div class="card advisor-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-info"></i> AI Savings Advisor</h3>
+                    </div>
+                    <div class="advisor-content" id="simpleAdvisorText">
+                        Your personalized savings strategy will appear here.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Recent Transactions & simple Chart -->
+            <div class="col-right">
+                <!-- Transaction log list -->
+                <div class="card">
+                    <div class="card-header flex-row">
+                        <h3><i class="fa-solid fa-list-ul"></i> Transaction History</h3>
+                        <button id="btnExportCSV" class="btn-link" title="Export Excel backup file">
+                            <i class="fa-solid fa-file-csv"></i> Excel Download
+                        </button>
+                    </div>
+                    <div class="logs-list-wrapper">
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-icon"><i class="fa-solid fa-circle-info"></i></div>
+                            <p>No logs available. Add a new log or load demo data below.</p>
+                        </div>
+                        <div class="simple-logs-list" id="simpleLogsList">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spending category Pie Chart -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-chart-pie"></i> Spending Share</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month-by-Month Savings Report Table -->
+        <div class="card monthly-report-card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-calendar-days"></i> Month-by-Month Savings Report</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-right">Total Inflow (Income)</th>
+                            <th class="text-right">Total Outflow (Expense)</th>
+                            <th class="text-right">Net Savings</th>
+                            <th class="text-center">Savings Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyReportTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer Control actions -->
+        <footer class="simple-footer">
+            <button id="btnLoadDemo" class="btn-footer-secondary">
+                <i class="fa-solid fa-database"></i> Load Example Logs (Demo Data)
+            </button>
+            <button id="btnResetAll" class="btn-footer-danger">
+                <i class="fa-solid fa-trash-can"></i> Delete All Data (Reset App)
+            </button>
+        </footer>
+    </div>
+
+    <!-- JS Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
