@@ -1,9 +1,15 @@
 // ==========================================
-// STATE MANAGEMENT & SIMPLE CATEGORIES
+// STATE MANAGEMENT & ACCOUNTS INITIALIZATION
 // ==========================================
 
 let state = {
     transactions: [],
+    accounts: [
+        { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
+        { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
+        { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
+        { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+    ],
     currency: '₹'
 };
 
@@ -20,6 +26,7 @@ const categoryColors = {
     'Others': '#64748B',                    // Slate
     'Salary': '#10B981',                    // Emerald
     'Business & Gigs': '#34D399',            // Mint
+    'Transfer': '#6366F1'                   // Indigo for transfers
 };
 
 const LOCAL_STORAGE_KEY = 'finflow_simple_state';
@@ -48,28 +55,35 @@ function getMockData() {
     };
 
     return {
+        accounts: [
+            { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
+            { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
+            { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
+            { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+        ],
         transactions: [
             // Previous Month Income
-            { id: 't1', description: 'Corporate Job Salary', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(-1, 1) },
-            { id: 't2', description: 'Freelance Design Project', amount: 5500, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(-1, 15) },
+            { id: 't1', description: 'Client A Project Payment', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(-1, 1), fromAccount: '', toAccount: 'acc-hdfc' },
+            { id: 't2', description: 'Freelance Design Work', amount: 5500, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(-1, 15), fromAccount: '', toAccount: 'acc-sbi' },
             
             // Previous Month Expenses
-            { id: 't3', description: 'Apartment Rent & Electricity', amount: 12000, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(-1, 1) },
-            { id: 't4', description: 'Weekly Groceries Haul', amount: 2800, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 5) },
-            { id: 't5', description: 'Train Booking Ticket', amount: 1200, type: 'expense', category: 'Travel', date: formatRelativeDate(-1, 10) },
-            { id: 't6', description: 'Dining out with Friends', amount: 1600, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 14) },
-            { id: 't7', description: 'New Wardrobe Clothes', amount: 2500, type: 'expense', category: 'Shopping & Entertainment', date: formatRelativeDate(-1, 20) },
-            { id: 't8', description: 'Medicines purchase', amount: 800, type: 'expense', category: 'Others', date: formatRelativeDate(-1, 25) },
+            { id: 't3', description: 'Apartment Rent HDFC', amount: 12000, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(-1, 1), fromAccount: 'acc-hdfc', toAccount: '' },
+            { id: 't4', description: 'Weekly Groceries Cash', amount: 2800, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 5), fromAccount: 'acc-cash', toAccount: '' },
+            { id: 't5', description: 'Savings Allocation', amount: 15000, type: 'transfer', category: 'Transfer', date: formatRelativeDate(-1, 10), fromAccount: 'acc-hdfc', toAccount: 'acc-savings' },
+            { id: 't6', description: 'Dining out with Friends', amount: 1600, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 14), fromAccount: 'acc-sbi', toAccount: '' },
+            { id: 't7', description: 'Online Shopping HDFC', amount: 2500, type: 'expense', category: 'Shopping & Entertainment', date: formatRelativeDate(-1, 20), fromAccount: 'acc-hdfc', toAccount: '' },
+            { id: 't8', description: 'Medicines purchase', amount: 800, type: 'expense', category: 'Others', date: formatRelativeDate(-1, 25), fromAccount: 'acc-cash', toAccount: '' },
 
             // Current Month Income
-            { id: 't9', description: 'Corporate Job Salary', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(0, 1) },
-            { id: 't10', description: 'Consulting Contract Work', amount: 8000, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(0, 4) },
+            { id: 't9', description: 'Corporate Job Salary', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(0, 1), fromAccount: '', toAccount: 'acc-hdfc' },
+            { id: 't10', description: 'Consulting Contract Work', amount: 8000, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(0, 4), fromAccount: '', toAccount: 'acc-hdfc' },
             
             // Current Month Expenses
-            { id: 't11', description: 'Apartment Rent & Electricity', amount: 12500, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 1) },
-            { id: 't12', description: 'Weekly Groceries Restock', amount: 3100, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(0, 3) },
-            { id: 't13', description: 'Fuel Refill Tank', amount: 950, type: 'expense', category: 'Travel', date: formatRelativeDate(0, 5) },
-            { id: 't14', description: 'Mobile Recharge Plan', amount: 499, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 6) }
+            { id: 't11', description: 'Apartment Rent HDFC', amount: 12500, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 1), fromAccount: 'acc-hdfc', toAccount: '' },
+            { id: 't12', description: 'Weekly Groceries Restock', amount: 3100, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(0, 3), fromAccount: 'acc-sbi', toAccount: '' },
+            { id: 't13', description: 'Savings Transfer', amount: 10000, type: 'transfer', category: 'Transfer', date: formatRelativeDate(0, 5), fromAccount: 'acc-hdfc', toAccount: 'acc-savings' },
+            { id: 't14', description: 'Fuel Refill Tank', amount: 950, type: 'expense', category: 'Travel', date: formatRelativeDate(0, 5), fromAccount: 'acc-hdfc', toAccount: '' },
+            { id: 't15', description: 'Mobile Recharge Plan', amount: 499, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 6), fromAccount: 'acc-sbi', toAccount: '' }
         ],
         currency: '₹'
     };
@@ -82,6 +96,17 @@ function loadState() {
         try {
             state = JSON.parse(saved);
             state.currency = '₹'; // Guarantee INR symbol
+            
+            // Backward compatibility checks
+            if (!state.accounts || state.accounts.length === 0) {
+                state.accounts = [
+                    { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
+                    { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
+                    { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
+                    { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+                ];
+                saveState();
+            }
         } catch (e) {
             console.error('Error loading state:', e);
             state = getMockData();
@@ -93,8 +118,60 @@ function loadState() {
     }
 }
 
+// Save state
 function saveState() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+}
+
+// Helper: Get Account Name by ID
+function getAccountName(id) {
+    if (!id) return '';
+    const acc = state.accounts.find(a => a.id === id);
+    return acc ? acc.name : '';
+}
+
+// ==========================================
+// DYNAMIC BALANCE LEDGER CALCULATOR
+// ==========================================
+function calculateAccountBalances(upToDateStr) {
+    let limitDate = null;
+    if (upToDateStr) {
+        const [yr, mo, dy] = upToDateStr.split('-').map(Number);
+        limitDate = new Date(yr, mo - 1, dy, 23, 59, 59);
+    }
+    
+    const balances = {};
+    state.accounts.forEach(acc => {
+        balances[acc.id] = acc.initialBalance || 0;
+    });
+    
+    state.transactions.forEach(tx => {
+        if (limitDate) {
+            const txDate = new Date(tx.date);
+            if (isNaN(txDate) || txDate > limitDate) {
+                return; // Skip transactions after month boundary
+            }
+        }
+        
+        if (tx.type === 'income') {
+            if (balances[tx.toAccount] !== undefined) {
+                balances[tx.toAccount] += tx.amount;
+            }
+        } else if (tx.type === 'expense') {
+            if (balances[tx.fromAccount] !== undefined) {
+                balances[tx.fromAccount] -= tx.amount;
+            }
+        } else if (tx.type === 'transfer') {
+            if (balances[tx.fromAccount] !== undefined) {
+                balances[tx.fromAccount] -= tx.amount;
+            }
+            if (balances[tx.toAccount] !== undefined) {
+                balances[tx.toAccount] += tx.amount;
+            }
+        }
+    });
+    
+    return balances;
 }
 
 // ==========================================
@@ -175,7 +252,7 @@ function renderAll() {
         if (isTargetMonth) {
             if (tx.type === 'income') {
                 monthlyIncome += tx.amount;
-            } else {
+            } else if (tx.type === 'expense') {
                 monthlyExpenses += tx.amount;
                 categorySums[tx.category] = (categorySums[tx.category] || 0) + tx.amount;
             }
@@ -210,7 +287,15 @@ function renderAll() {
 
     document.getElementById('lblSavingsPct').textContent = `${savingsRate < 0 ? 0 : savingsRate}% saved from earnings`;
 
-    // Render list
+    // Calculate balances up to the end of the selected month
+    const lastDay = new Date(thisYear, thisMonth + 1, 0).getDate();
+    const monthEndBoundaryStr = `${thisYear}-${String(thisMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const monthlyBalances = calculateAccountBalances(monthEndBoundaryStr);
+    
+    // Render account balances list widget
+    renderAccountsWidget(monthlyBalances, fmt);
+
+    // Render list of transactions
     renderTransactionsList(monthlyTransactions, fmt);
 
     // Draw chart
@@ -221,6 +306,32 @@ function renderAll() {
 
     // Month-by-Month Savings Table Renderer
     renderMonthlyReportTable();
+}
+
+function renderAccountsWidget(balances, formatFn) {
+    const listContainer = document.getElementById('accountsList');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '';
+    
+    state.accounts.forEach(acc => {
+        const bal = balances[acc.id] || 0;
+        const item = document.createElement('div');
+        item.className = 'account-item';
+        
+        let typeLabel = 'Bank Account';
+        if (acc.type === 'savings') typeLabel = 'Savings Account';
+        if (acc.type === 'cash') typeLabel = 'Cash Hand';
+        
+        item.innerHTML = `
+            <div class="account-name-group">
+                <span class="account-name">${escapeHtml(acc.name)}</span>
+                <span class="account-type-badge">${typeLabel}</span>
+            </div>
+            <div class="account-balance">${formatFn(bal)}</div>
+        `;
+        listContainer.appendChild(item);
+    });
 }
 
 function renderMonthlyReportTable() {
@@ -237,7 +348,7 @@ function renderMonthlyReportTable() {
         }
     });
 
-    // Also include current month in case it has no transactions
+    // Also include current month
     const today = new Date();
     const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     uniqueMonths.add(currentMonthKey);
@@ -265,7 +376,7 @@ function renderMonthlyReportTable() {
             if (!isNaN(d) && d.getFullYear() === targetYear && d.getMonth() === targetMonth) {
                 if (tx.type === 'income') {
                     income += tx.amount;
-                } else {
+                } else if (tx.type === 'expense') {
                     expenses += tx.amount;
                 }
             }
@@ -284,7 +395,7 @@ function renderMonthlyReportTable() {
         row.innerHTML = `
             <td style="font-weight: 700; padding: 0.85rem 1rem;">${monthsName[targetMonth]} ${targetYear}</td>
             <td style="text-align: right; padding: 0.85rem 1rem; color: #10B981; font-weight: 600;">+${fmt(income)}</td>
-            <td style="text-align: right; padding: 0.85rem 1rem; color: #F8FAFC;">-${fmt(expenses)}</td>
+            <td style="text-align: right; padding: 0.85rem 1rem; color: var(--text-primary);">-${fmt(expenses)}</td>
             <td style="text-align: right; padding: 0.85rem 1rem; color: ${savingsColor}; font-weight: 700;">${fmt(netSavings)}</td>
             <td style="text-align: center; padding: 0.85rem 1rem; font-weight: 700; color: ${savingsColor};">${rateDisplay}</td>
         `;
@@ -292,7 +403,7 @@ function renderMonthlyReportTable() {
     });
 }
 
-// Render simple list of logs
+// Render list of logs
 function renderTransactionsList(transactions, formatFn) {
     const listContainer = document.getElementById('simpleLogsList');
     const emptyState = document.getElementById('emptyState');
@@ -318,14 +429,24 @@ function renderTransactionsList(transactions, formatFn) {
         const dateObj = new Date(tx.date);
         const dateStr = isNaN(dateObj) ? tx.date : dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-        const typeSign = tx.type === 'income' ? '+' : '-';
-        const amountClass = tx.type === 'income' ? 'plus' : 'minus';
+        const typeSign = tx.type === 'income' ? '+' : (tx.type === 'expense' ? '-' : '⇄ ');
+        const amountClass = tx.type === 'income' ? 'plus' : (tx.type === 'expense' ? 'minus' : 'transfer');
+
+        let accountFlowText = '';
+        if (tx.type === 'income') {
+            accountFlowText = `to ${getAccountName(tx.toAccount)}`;
+        } else if (tx.type === 'expense') {
+            accountFlowText = `from ${getAccountName(tx.fromAccount)}`;
+        } else if (tx.type === 'transfer') {
+            accountFlowText = `${getAccountName(tx.fromAccount)} → ${getAccountName(tx.toAccount)}`;
+        }
 
         item.innerHTML = `
             <div class="log-info-group">
                 <span class="log-title">${escapeHtml(tx.description)}</span>
                 <div class="log-subdetails">
                     <span class="category-tag">${tx.category}</span>
+                    <span class="account-flow-tag" style="font-weight: 600; color: var(--text-secondary);">${accountFlowText}</span>
                     <span>${dateStr}</span>
                 </div>
             </div>
@@ -342,7 +463,7 @@ function renderTransactionsList(transactions, formatFn) {
 
 // Delete transaction
 window.deleteLog = function(id) {
-    if (confirm('Kya aap is entry ko delete karna chahte hain?')) {
+    if (confirm('Are you sure you want to delete this transaction entry?')) {
         state.transactions = state.transactions.filter(tx => tx.id !== id);
         saveState();
         renderAll();
@@ -367,10 +488,10 @@ function renderDoughnutChart(categorySums) {
         categoryChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['No transactions logged'],
+                labels: ['No expense logged'],
                 datasets: [{
                     data: [1],
-                    backgroundColor: ['#334155'],
+                    backgroundColor: ['#E2E8F0'],
                     borderWidth: 0
                 }]
             },
@@ -389,7 +510,7 @@ function renderDoughnutChart(categorySums) {
                     data,
                     backgroundColor: bgColors,
                     borderWidth: 1,
-                    borderColor: '#1E293B'
+                    borderColor: '#FFFFFF'
                 }]
             },
             options: {
@@ -399,7 +520,7 @@ function renderDoughnutChart(categorySums) {
                     legend: {
                         position: 'right',
                         labels: {
-                            color: '#94A3B8',
+                            color: '#475569',
                             boxWidth: 10,
                             font: { family: 'Plus Jakarta Sans', size: 10, weight: '600' }
                         }
@@ -424,7 +545,7 @@ function renderAdvisorStrategy(income, expenses, rate, categorySums, fmt) {
     if (!container) return;
 
     if (income === 0 && expenses === 0) {
-        container.innerHTML = '<strong>Aapne abhi koi transactions log nahi kiye hain.</strong> Naya transaction add karein takki hum aapko bachat tips de sakein!';
+        container.innerHTML = '<strong>No transaction logged yet.</strong> Add transactions to see savings strategies.';
         return;
     }
 
@@ -432,11 +553,11 @@ function renderAdvisorStrategy(income, expenses, rate, categorySums, fmt) {
 
     // Rule 1: Deficit checks
     if (income > 0 && expenses > income) {
-        tips += `<span style="color: #F43F5E; font-weight: 700;"><i class="fa-solid fa-circle-exclamation"></i> Savdhan! Kharch Kamai Se Jyada Hai:</span><br>Aapne is mahine kamai se ₹${(expenses - income).toLocaleString('en-IN')} zyada kharch kiye hain. Naye kharche turant band karein.<br><br>`;
+        tips += `<span style="color: #F43F5E; font-weight: 700;"><i class="fa-solid fa-circle-exclamation"></i> Alert: Spending Exceeds Income:</span><br>You spent ₹${(expenses - income).toLocaleString('en-IN')} more than you earned this month. Freeze unnecessary spending.<br><br>`;
     } else if (rate < 15 && income > 0) {
-        tips += `<span style="color: #D97706; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Bachat Badhayein:</span><br>Aapki bachat sirf ${rate}% hai. Aam taur par kam se kam 20% bachat karna safe hota hai. Food aur shopping ke kharche check karein.<br><br>`;
+        tips += `<span style="color: #D97706; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Increase Savings:</span><br>Your savings rate is only ${rate}%. Aim for at least 20% to build a financial cushion.<br><br>`;
     } else if (rate >= 20) {
-        tips += `<span style="color: #10B981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Bahut Badhiya Bachat:</span><br>Aap ${rate}% bachat kar rahe hain. Yeh ek safe aur behtarin bachat speed hai! Bache hue paise ko invest karne ka sochein.<br><br>`;
+        tips += `<span style="color: #10B981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Great Savings Rate:</span><br>You saved ${rate}% of your earnings this month. Consider investing the surplus.<br><br>`;
     }
 
     // Rule 2: Top leaks
@@ -451,20 +572,19 @@ function renderAdvisorStrategy(income, expenses, rate, categorySums, fmt) {
 
     if (maxExpenseCategory) {
         const pct = income > 0 ? ((maxExpenseVal / income) * 100).toFixed(0) : 0;
-        tips += `<strong><i class="fa-solid fa-tags"></i> Top Expense Head:</strong><br>Aapka sabse bada kharcha <strong>${maxExpenseCategory}</strong> mein hua hai (₹${maxExpenseVal.toLocaleString('en-IN')} jo ki aapki kamai ka ${pct}% hai). Agar ho sake toh is area mein thodi bachat karein.`;
+        tips += `<strong><i class="fa-solid fa-tags"></i> Top Outflow Category:</strong><br>Your highest spending was in <strong>${maxExpenseCategory}</strong> (₹${maxExpenseVal.toLocaleString('en-IN')}, which is ${pct}% of your inflow).`;
     }
 
     container.innerHTML = tips;
 }
 
 // ==========================================
-// FORM CONTROLLERS & OPTION SWITCHERS
+// FORM CONTROLLERS & ACCOUNT SELECTORS
 // ==========================================
-const logTypeSelect = document.getElementById('logType');
 const logCategorySelect = document.getElementById('logCategory');
 
 function updateCategoryOptions() {
-    const type = logTypeSelect.value;
+    const type = document.getElementById('logType').value;
     const list = categories[type] || [];
     
     logCategorySelect.innerHTML = '';
@@ -476,12 +596,69 @@ function updateCategoryOptions() {
     });
 }
 
-// Listen to type switch in form
-if (logTypeSelect) {
-    logTypeSelect.addEventListener('change', updateCategoryOptions);
+function updateAccountDropdowns() {
+    const fromSelect = document.getElementById('logFromAccount');
+    const toSelect = document.getElementById('logToAccount');
+    
+    if (!fromSelect || !toSelect) return;
+    
+    fromSelect.innerHTML = '';
+    toSelect.innerHTML = '';
+    
+    state.accounts.forEach(acc => {
+        const opt1 = document.createElement('option');
+        opt1.value = acc.id;
+        opt1.textContent = acc.name;
+        fromSelect.appendChild(opt1);
+        
+        const opt2 = document.createElement('option');
+        opt2.value = acc.id;
+        opt2.textContent = acc.name;
+        toSelect.appendChild(opt2);
+    });
 }
 
-// Save transaction form submit
+// 3-way Form Type Toggle Handler
+window.setFormType = function(type) {
+    document.getElementById('logType').value = type;
+    
+    document.querySelectorAll('.type-toggle-group .btn-toggle').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const fromGroup = document.getElementById('groupFromAccount');
+    const toGroup = document.getElementById('groupToAccount');
+    const catGroup = document.getElementById('groupCategory');
+    
+    if (type === 'expense') {
+        const btnToggleExpense = document.getElementById('btnToggleExpense');
+        if (btnToggleExpense) btnToggleExpense.classList.add('active');
+        if (fromGroup) fromGroup.style.display = 'block';
+        if (toGroup) toGroup.style.display = 'none';
+        if (catGroup) catGroup.style.display = 'block';
+        updateCategoryOptions();
+    } else if (type === 'income') {
+        const btnToggleIncome = document.getElementById('btnToggleIncome');
+        if (btnToggleIncome) btnToggleIncome.classList.add('active');
+        if (fromGroup) fromGroup.style.display = 'none';
+        if (toGroup) toGroup.style.display = 'block';
+        if (catGroup) catGroup.style.display = 'block';
+        updateCategoryOptions();
+    } else if (type === 'transfer') {
+        const btnToggleTransfer = document.getElementById('btnToggleTransfer');
+        if (btnToggleTransfer) btnToggleTransfer.classList.add('active');
+        if (fromGroup) fromGroup.style.display = 'block';
+        if (toGroup) toGroup.style.display = 'block';
+        if (catGroup) catGroup.style.display = 'none';
+    }
+};
+
+window.triggerTransfer = function() {
+    showPage('add-log');
+    setFormType('transfer');
+};
+
+// Form submit handler
 const form = document.getElementById('simpleLogForm');
 if (form) {
     form.addEventListener('submit', function(e) {
@@ -490,11 +667,29 @@ if (form) {
         const type = document.getElementById('logType').value;
         const amount = parseFloat(document.getElementById('logAmount').value);
         const description = document.getElementById('logDesc').value.trim();
-        const category = document.getElementById('logCategory').value;
         const date = document.getElementById('logDate').value;
 
-        if (isNaN(amount) || amount <= 0 || !description || !category || !date) {
-            alert('Kripya saare fields sahi tarike se bharein!');
+        let fromAccount = '';
+        let toAccount = '';
+        let category = 'Transfer';
+
+        if (type === 'expense') {
+            fromAccount = document.getElementById('logFromAccount').value;
+            category = document.getElementById('logCategory').value;
+            if (!fromAccount) { alert('Please select a Source Account!'); return; }
+        } else if (type === 'income') {
+            toAccount = document.getElementById('logToAccount').value;
+            category = document.getElementById('logCategory').value;
+            if (!toAccount) { alert('Please select a Target Account!'); return; }
+        } else if (type === 'transfer') {
+            fromAccount = document.getElementById('logFromAccount').value;
+            toAccount = document.getElementById('logToAccount').value;
+            if (!fromAccount || !toAccount) { alert('Please select both Accounts for Transfer!'); return; }
+            if (fromAccount === toAccount) { alert('Source and Destination Accounts cannot be the same!'); return; }
+        }
+
+        if (isNaN(amount) || amount <= 0 || !description || !date) {
+            alert('Please fill out all fields correctly!');
             return;
         }
 
@@ -504,14 +699,16 @@ if (form) {
             amount,
             type,
             category,
-            date
+            date,
+            fromAccount,
+            toAccount
         };
 
         state.transactions.push(newLog);
         saveState();
         renderAll();
 
-        // Reset form but preserve date and type for quick logging!
+        // Reset form inputs
         document.getElementById('logAmount').value = '';
         document.getElementById('logDesc').value = '';
 
@@ -526,7 +723,7 @@ if (form) {
 
 // Load demo mock data
 document.getElementById('btnLoadDemo').addEventListener('click', function() {
-    if (confirm('Example data load karein? Purana data delete ho jayega.')) {
+    if (confirm('Load demo data? This will overwrite your current logs.')) {
         state = getMockData();
         saveState();
         renderAll();
@@ -535,8 +732,14 @@ document.getElementById('btnLoadDemo').addEventListener('click', function() {
 
 // Reset app
 document.getElementById('btnResetAll').addEventListener('click', function() {
-    if (confirm('Kya aap saare logs delete karke app ko reset karna chahte hain?')) {
+    if (confirm('Are you sure you want to delete all logs and reset the app?')) {
         state = {
+            accounts: [
+                { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
+                { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
+                { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
+                { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+            ],
             transactions: [],
             currency: '₹'
         };
@@ -545,19 +748,21 @@ document.getElementById('btnResetAll').addEventListener('click', function() {
     }
 });
 
-// Excel backup export
+// Excel backup CSV export
 document.getElementById('btnExportCSV').addEventListener('click', function() {
     if (state.transactions.length === 0) {
-        alert('Export karne ke liye koi transactions nahi hain.');
+        alert('There are no transactions to export.');
         return;
     }
 
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Date (Tariq),Description (Hisab),Type,Category,Amount (Rupaye)\n";
+    csvContent += "Date,Description,Type,Category,Amount (INR),From Account,To Account\n";
 
     state.transactions.forEach(t => {
         const desc = t.description.replace(/,/g, ' ');
-        csvContent += `${t.date},${desc},${t.type === 'income' ? 'Income' : 'Expense'},${t.category},${t.amount}\n`;
+        const fromName = getAccountName(t.fromAccount);
+        const toName = getAccountName(t.toAccount);
+        csvContent += `${t.date},${desc},${t.type},${t.category},${t.amount},${fromName},${toName}\n`;
     });
 
     const encoded = encodeURI(csvContent);
@@ -569,7 +774,7 @@ document.getElementById('btnExportCSV').addEventListener('click', function() {
     document.body.removeChild(link);
 });
 
-// Month selector change
+// Month selector change listener
 const monthSelect = document.getElementById('reportMonthSelect');
 if (monthSelect) {
     monthSelect.addEventListener('change', renderAll);
@@ -610,13 +815,11 @@ function setupLockScreenState() {
     const lockSubtitle = document.getElementById('lockSubtitle');
 
     if (!savedPin) {
-        // First run: Create a passcode
         isSettingPasscode = true;
         if (lockTitle) lockTitle.textContent = 'Set a Passcode';
         if (lockSubtitle) lockSubtitle.textContent = 'Choose a 4-digit PIN to lock your reports';
         showPage('lock');
     } else {
-        // Normal run: Enter passcode to unlock
         isSettingPasscode = false;
         if (lockTitle) lockTitle.textContent = 'Enter Passcode';
         if (lockSubtitle) lockSubtitle.textContent = 'Secure your financial logs';
@@ -700,8 +903,11 @@ function init() {
     // Check passcode setup
     setupLockScreenState();
 
+    // Populate dropdown selectors with active bank accounts
+    updateAccountDropdowns();
+
     // Set dynamic dropdown categories options based on default type selected
-    updateCategoryOptions();
+    setFormType('expense');
 
     // Default logging date to Today
     const todayStr = new Date().toISOString().split('T')[0];
