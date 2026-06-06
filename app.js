@@ -5,17 +5,16 @@
 let state = {
     transactions: [],
     accounts: [
-        { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
-        { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
-        { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
-        { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+        { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
+        { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
+        { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 0, type: 'savings' },
+        { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 0, type: 'cash' }
     ],
+    categories: {
+        expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
+        income: ['Salary', 'Business & Gigs', 'Others']
+    },
     currency: '₹'
-};
-
-const categories = {
-    expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
-    income: ['Salary', 'Business & Gigs', 'Others']
 };
 
 const categoryColors = {
@@ -37,12 +36,16 @@ const LOCAL_STORAGE_KEY = 'finflow_simple_state';
 function getInitialEmptyState() {
     return {
         accounts: [
-            { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 0, type: 'bank' },
-            { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 0, type: 'bank' },
-            { id: 'acc-savings', name: 'Savings Account', initialBalance: 0, type: 'savings' },
-            { id: 'acc-cash', name: 'Cash', initialBalance: 0, type: 'cash' }
+            { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
+            { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
+            { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 0, type: 'savings' },
+            { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 0, type: 'cash' }
         ],
         transactions: [],
+        categories: {
+            expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
+            income: ['Salary', 'Business & Gigs', 'Others']
+        },
         currency: '₹'
     };
 }
@@ -69,11 +72,15 @@ function getDemoMockData() {
 
     return {
         accounts: [
-            { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
-            { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
-            { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
-            { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+            { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 25000, type: 'bank' },
+            { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 15000, type: 'bank' },
+            { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 50000, type: 'savings' },
+            { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 2000, type: 'cash' }
         ],
+        categories: {
+            expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
+            income: ['Salary', 'Business & Gigs', 'Others']
+        },
         transactions: [
             // Previous Month Income
             { id: 't1', description: 'Client A Project Payment', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(-1, 1), fromAccount: '', toAccount: 'acc-hdfc' },
@@ -113,11 +120,24 @@ function loadState() {
             // Backward compatibility checks
             if (!state.accounts || state.accounts.length === 0) {
                 state.accounts = [
-                    { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 0, type: 'bank' },
-                    { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 0, type: 'bank' },
-                    { id: 'acc-savings', name: 'Savings Account', initialBalance: 0, type: 'savings' },
-                    { id: 'acc-cash', name: 'Cash', initialBalance: 0, type: 'cash' }
+                    { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
+                    { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
+                    { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 0, type: 'savings' },
+                    { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 0, type: 'cash' }
                 ];
+                saveState();
+            } else {
+                state.accounts.forEach(acc => {
+                    if (!acc.owner) acc.owner = 'Rajat';
+                });
+                saveState();
+            }
+            
+            if (!state.categories) {
+                state.categories = {
+                    expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
+                    income: ['Salary', 'Business & Gigs', 'Others']
+                };
                 saveState();
             }
         } catch (e) {
@@ -344,7 +364,7 @@ function renderAccountsWidget(balances, formatFn) {
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
-                <span class="account-type-badge">${typeLabel}</span>
+                <span class="account-type-badge">${typeLabel} • ${escapeHtml(acc.owner || 'Self')}</span>
             </div>
             <div class="account-balance">${formatFn(bal)}</div>
         `;
@@ -603,7 +623,7 @@ const logCategorySelect = document.getElementById('logCategory');
 
 function updateCategoryOptions() {
     const type = document.getElementById('logType').value;
-    const list = categories[type] || [];
+    const list = state.categories[type] || [];
     
     logCategorySelect.innerHTML = '';
     list.forEach(cat => {
@@ -624,14 +644,15 @@ function updateAccountDropdowns() {
     toSelect.innerHTML = '';
     
     state.accounts.forEach(acc => {
+        const nameWithOwner = `${acc.name} (${acc.owner || 'Self'})`;
         const opt1 = document.createElement('option');
         opt1.value = acc.id;
-        opt1.textContent = acc.name;
+        opt1.textContent = nameWithOwner;
         fromSelect.appendChild(opt1);
         
         const opt2 = document.createElement('option');
         opt2.value = acc.id;
-        opt2.textContent = acc.name;
+        opt2.textContent = nameWithOwner;
         toSelect.appendChild(opt2);
     });
 }
@@ -684,6 +705,7 @@ window.openAddAccountModal = function() {
     if (modal) {
         modal.style.display = 'flex';
         document.getElementById('newAccName').value = '';
+        document.getElementById('newAccOwner').value = '';
         document.getElementById('newAccBalance').value = '0';
         document.getElementById('newAccType').value = 'bank';
     }
@@ -719,24 +741,26 @@ if (addAccountForm) {
         e.preventDefault();
         
         const name = document.getElementById('newAccName').value.trim();
+        const owner = document.getElementById('newAccOwner').value.trim();
         const initialBalance = parseFloat(document.getElementById('newAccBalance').value);
         const type = document.getElementById('newAccType').value;
         
-        if (!name || isNaN(initialBalance) || initialBalance < 0 || !type) {
+        if (!name || !owner || isNaN(initialBalance) || initialBalance < 0 || !type) {
             alert('Please fill out all fields correctly!');
             return;
         }
         
-        // Check duplicate names
-        const exists = state.accounts.some(a => a.name.toLowerCase() === name.toLowerCase());
+        // Check duplicate names (scoped by owner for uniqueness)
+        const exists = state.accounts.some(a => a.name.toLowerCase() === name.toLowerCase() && (a.owner || '').toLowerCase() === owner.toLowerCase());
         if (exists) {
-            alert('An account with this name already exists!');
+            alert('An account with this name and owner already exists!');
             return;
         }
         
         const newAccount = {
             id: 'acc-' + Date.now(),
             name,
+            owner,
             initialBalance,
             type
         };
@@ -750,6 +774,69 @@ if (addAccountForm) {
         
         // Close Modal
         closeAddAccountModal();
+    });
+}
+
+// ==========================================
+// DYNAMIC CATEGORY CREATION DIALOGS
+// ==========================================
+window.openAddCategoryModal = function() {
+    const modal = document.getElementById('modal-add-category');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('newCatName').value = '';
+        document.getElementById('newCatType').value = document.getElementById('logType').value === 'income' ? 'income' : 'expense';
+    }
+};
+
+window.closeAddCategoryModal = function() {
+    const modal = document.getElementById('modal-add-category');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+const addCategoryForm = document.getElementById('addCategoryForm');
+if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('newCatName').value.trim();
+        const type = document.getElementById('newCatType').value;
+        
+        if (!name || !type) {
+            alert('Please enter a valid category name!');
+            return;
+        }
+        
+        // Check duplicates
+        const exists = state.categories[type].some(c => c.toLowerCase() === name.toLowerCase());
+        if (exists) {
+            alert('This category already exists!');
+            return;
+        }
+        
+        // Add to state
+        state.categories[type].push(name);
+        
+        // Assign a random pastel color for charts
+        const colors = ['#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#10B981', '#34D399', '#6366F1', '#06B6D4', '#F43F5E', '#14B8A6'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        categoryColors[name] = randomColor;
+        
+        saveState();
+        
+        // Refresh form categories
+        updateCategoryOptions();
+        
+        // Select newly created category
+        const logCategory = document.getElementById('logCategory');
+        if (logCategory) {
+            logCategory.value = name;
+        }
+        
+        // Close modal
+        closeAddCategoryModal();
     });
 }
 
