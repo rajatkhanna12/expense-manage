@@ -47,6 +47,12 @@
     -webkit-font-smoothing: antialiased;
 }
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+}
+
 body {
     background-color: var(--bg-app);
     background-image: radial-gradient(circle at 80% 10%, #EFF6FF 0%, #F8FAFC 80%);
@@ -54,7 +60,6 @@ body {
     min-height: 100vh;
     padding: 2rem 1.5rem;
     position: relative;
-    overflow-x: hidden;
 }
 
 /* Background glowing blur orbs */
@@ -895,6 +900,12 @@ body::after {
 @media (max-width: 768px) {
     body {
         padding: 1rem 0.75rem;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .lock-input-group input {
+        font-size: 16px !important;
     }
 
     .kpi-row {
