@@ -475,6 +475,138 @@ body {
     background: rgba(244, 63, 94, 0.08);
 }
 
+/* Passcode Lock Screen Overlay */
+.lock-screen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-app);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+
+.lock-screen-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.lock-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.lock-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-glow);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.lock-container h2 {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.lock-container p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: -0.5rem;
+}
+
+/* Pin Dots indicators */
+.pin-dots {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--text-muted);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.dot.filled {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Pin Keypad Grid */
+.pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.pin-btn {
+    background: #F8FAFC;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    font-weight: 700;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    transition: background 0.15s, transform 0.1s;
+    outline: none;
+}
+
+.pin-btn:active {
+    background: var(--primary-glow);
+    transform: scale(0.95);
+}
+
+.pin-btn.clear, .pin-btn.delete {
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-secondary);
+}
+
+.pin-btn.clear:hover, .pin-btn.delete:hover {
+    color: var(--text-primary);
+}
+
+.lock-footer {
+    min-height: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--danger);
+}
+
 /* Month-by-Month Savings Table Styles */
 .table-responsive {
     overflow-x: auto;

@@ -577,7 +577,109 @@ if (monthSelect) {
 // ==========================================
 function init() {
     // Load local storage
+// ==========================================
+// PASSCODE SECURITY LOCK SCREEN LOGIC
+// ==========================================
+let pinBuffer = '';
+let isSettingPasscode = false;
+
+function setupLockScreenState() {
+    const savedPin = localStorage.getItem('finflow_passcode');
+    const lockTitle = document.getElementById('lockTitle');
+    const lockSubtitle = document.getElementById('lockSubtitle');
+    const lockScreen = document.getElementById('lockScreen');
+
+    if (!savedPin) {
+        // First run: Create a passcode
+        isSettingPasscode = true;
+        if (lockTitle) lockTitle.textContent = 'Set a Passcode';
+        if (lockSubtitle) lockSubtitle.textContent = 'Choose a 4-digit PIN to lock your reports';
+        if (lockScreen) lockScreen.classList.remove('hidden');
+    } else {
+        // Normal run: Enter passcode to unlock
+        isSettingPasscode = false;
+        if (lockTitle) lockTitle.textContent = 'Enter Passcode';
+        if (lockSubtitle) lockSubtitle.textContent = 'Secure your financial logs';
+        if (lockScreen) lockScreen.classList.remove('hidden');
+    }
+    updatePinDots();
+}
+
+function updatePinDots() {
+    const dots = document.querySelectorAll('.pin-dots .dot');
+    dots.forEach((dot, idx) => {
+        if (idx < pinBuffer.length) {
+            dot.classList.add('filled');
+        } else {
+            dot.classList.remove('filled');
+        }
+    });
+}
+
+window.pressPin = function(num) {
+    if (pinBuffer.length >= 4) return;
+    
+    pinBuffer += num;
+    updatePinDots();
+    
+    const footerMsg = document.getElementById('lockFooterMessage');
+    if (footerMsg) footerMsg.textContent = '';
+
+    if (pinBuffer.length === 4) {
+        setTimeout(checkPinEntry, 200);
+    }
+};
+
+window.clearPin = function() {
+    pinBuffer = '';
+    updatePinDots();
+    const footerMsg = document.getElementById('lockFooterMessage');
+    if (footerMsg) footerMsg.textContent = '';
+};
+
+window.deletePin = function() {
+    if (pinBuffer.length > 0) {
+        pinBuffer = pinBuffer.slice(0, -1);
+        updatePinDots();
+    }
+    const footerMsg = document.getElementById('lockFooterMessage');
+    if (footerMsg) footerMsg.textContent = '';
+};
+
+function checkPinEntry() {
+    const footerMsg = document.getElementById('lockFooterMessage');
+    const lockScreen = document.getElementById('lockScreen');
+
+    if (isSettingPasscode) {
+        localStorage.setItem('finflow_passcode', pinBuffer);
+        alert('Passcode set successfully! Remember this passcode.');
+        isSettingPasscode = false;
+        pinBuffer = '';
+        updatePinDots();
+        if (lockScreen) lockScreen.classList.add('hidden');
+    } else {
+        const correctPin = localStorage.getItem('finflow_passcode');
+        if (pinBuffer === correctPin) {
+            pinBuffer = '';
+            updatePinDots();
+            if (lockScreen) lockScreen.classList.add('hidden');
+        } else {
+            if (footerMsg) footerMsg.textContent = 'Incorrect Passcode. Try Again!';
+            pinBuffer = '';
+            updatePinDots();
+        }
+    }
+}
+
+// ==========================================
+// APP STARTUP INITIALIZATION
+// ==========================================
+function init() {
+    // Load local storage
     loadState();
+
+    // Check passcode setup
+    setupLockScreenState();
 
     // Set dynamic dropdown categories options based on default type selected
     updateCategoryOptions();

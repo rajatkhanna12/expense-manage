@@ -183,6 +183,42 @@
         </footer>
     </div>
 
+    <!-- Passcode Lock Screen Overlay -->
+    <div class="lock-screen-overlay" id="lockScreen">
+        <div class="lock-container">
+            <div class="lock-logo">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 id="lockTitle">Enter Passcode</h2>
+            <p id="lockSubtitle">Secure your financial logs</p>
+            
+            <!-- Pin Dots -->
+            <div class="pin-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+
+            <!-- PIN Pad Keypad -->
+            <div class="pin-pad">
+                <button type="button" class="pin-btn" onclick="pressPin('1')">1</button>
+                <button type="button" class="pin-btn" onclick="pressPin('2')">2</button>
+                <button type="button" class="pin-btn" onclick="pressPin('3')">3</button>
+                <button type="button" class="pin-btn" onclick="pressPin('4')">4</button>
+                <button type="button" class="pin-btn" onclick="pressPin('5')">5</button>
+                <button type="button" class="pin-btn" onclick="pressPin('6')">6</button>
+                <button type="button" class="pin-btn" onclick="pressPin('7')">7</button>
+                <button type="button" class="pin-btn" onclick="pressPin('8')">8</button>
+                <button type="button" class="pin-btn" onclick="pressPin('9')">9</button>
+                <button type="button" class="pin-btn clear" onclick="clearPin()">Clear</button>
+                <button type="button" class="pin-btn" onclick="pressPin('0')">0</button>
+                <button type="button" class="pin-btn delete" onclick="deletePin()"><i class="fa-solid fa-delete-left"></i></button>
+            </div>
+            <div class="lock-footer" id="lockFooterMessage"></div>
+        </div>
+    </div>
+
     <!-- JS Logic -->
     <script src="app.js"></script>
 </body>
