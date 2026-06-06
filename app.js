@@ -32,9 +32,22 @@ const categoryColors = {
 const LOCAL_STORAGE_KEY = 'finflow_simple_state';
 
 // ==========================================
-// PRE-POPULATED MOCK DEMO DATA
+// PRE-POPULATED EMPTY AND MOCK DATA TEMPLATES
 // ==========================================
-function getMockData() {
+function getInitialEmptyState() {
+    return {
+        accounts: [
+            { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 0, type: 'bank' },
+            { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 0, type: 'bank' },
+            { id: 'acc-savings', name: 'Savings Account', initialBalance: 0, type: 'savings' },
+            { id: 'acc-cash', name: 'Cash', initialBalance: 0, type: 'cash' }
+        ],
+        transactions: [],
+        currency: '₹'
+    };
+}
+
+function getDemoMockData() {
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonthNum = today.getMonth(); // 0-indexed
@@ -100,20 +113,20 @@ function loadState() {
             // Backward compatibility checks
             if (!state.accounts || state.accounts.length === 0) {
                 state.accounts = [
-                    { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
-                    { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
-                    { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
-                    { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
+                    { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 0, type: 'bank' },
+                    { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 0, type: 'bank' },
+                    { id: 'acc-savings', name: 'Savings Account', initialBalance: 0, type: 'savings' },
+                    { id: 'acc-cash', name: 'Cash', initialBalance: 0, type: 'cash' }
                 ];
                 saveState();
             }
         } catch (e) {
             console.error('Error loading state:', e);
-            state = getMockData();
+            state = getInitialEmptyState();
             saveState();
         }
     } else {
-        state = getMockData();
+        state = getInitialEmptyState();
         saveState();
     }
 }
@@ -806,7 +819,7 @@ if (form) {
 // Load demo mock data
 document.getElementById('btnLoadDemo').addEventListener('click', function() {
     if (confirm('Load demo data? This will overwrite your current logs.')) {
-        state = getMockData();
+        state = getDemoMockData();
         saveState();
         renderAll();
     }
@@ -815,16 +828,7 @@ document.getElementById('btnLoadDemo').addEventListener('click', function() {
 // Reset app
 document.getElementById('btnResetAll').addEventListener('click', function() {
     if (confirm('Are you sure you want to delete all logs and reset the app?')) {
-        state = {
-            accounts: [
-                { id: 'acc-hdfc', name: 'HDFC Bank', initialBalance: 25000, type: 'bank' },
-                { id: 'acc-sbi', name: 'SBI Bank', initialBalance: 15000, type: 'bank' },
-                { id: 'acc-savings', name: 'Savings Account', initialBalance: 50000, type: 'savings' },
-                { id: 'acc-cash', name: 'Cash', initialBalance: 2000, type: 'cash' }
-            ],
-            transactions: [],
-            currency: '₹'
-        };
+        state = getInitialEmptyState();
         saveState();
         renderAll();
     }
