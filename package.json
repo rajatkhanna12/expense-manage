@@ -1,7 +1,7 @@
 {
   "name": "finflow",
-  "version": "2.2.0",
-  "description": "FinFlow — Centralized Simple Money Tracker with Cloud Sync",
+  "version": "3.0.0",
+  "description": "FinFlow — Clean Decoupled Fullstack Money Tracker",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

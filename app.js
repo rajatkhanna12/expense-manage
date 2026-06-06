@@ -24,6 +24,37 @@ const categoryColors = {
 };
 
 // ==========================================
+// TOAST NOTIFICATIONS SYSTEM
+// ==========================================
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        console.log(`[Toast ${type}]: ${message}`);
+        return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    let icon = 'fa-circle-check';
+    if (type === 'error') icon = 'fa-circle-xmark';
+    if (type === 'info') icon = 'fa-circle-info';
+
+    toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <span>${escapeHtml(message)}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Remove after animation completes
+    setTimeout(() => {
+        toast.remove();
+    }, 4000);
+}
+
+// ==========================================
 // CENTRALIZED REST API GATEWAY
 // ==========================================
 
@@ -40,16 +71,32 @@ async function apiCall(path, method = 'GET', body = null) {
         options.body = JSON.stringify(body);
     }
     
-    // Resolve absolute path if on static host (github.io)
-    let apiBase = '';
-    if (window.location.hostname.endsWith('github.io')) {
-        apiBase = localStorage.getItem('finflow_api_url') || '';
-        if (apiBase && apiBase.endsWith('/')) {
-            apiBase = apiBase.slice(0, -1);
+    // Resolve Backend Server URL (defaults to production API domain)
+    let apiBase = 'https://api.businessbox.in';
+    
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' || 
+                    window.location.hostname.startsWith('192.168.');
+    
+    if (isLocal) {
+        if (window.location.port && window.location.port !== '5500') { // Check if served by local backend server
+            apiBase = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
+        } else {
+            apiBase = 'http://localhost:8080';
         }
     }
     
-    const url = apiBase ? `${apiBase}${path}` : path;
+    // Explicit client override via local storage configuration
+    const savedUrl = localStorage.getItem('finflow_api_url');
+    if (savedUrl) {
+        apiBase = savedUrl;
+    }
+    
+    if (apiBase.endsWith('/')) {
+        apiBase = apiBase.slice(0, -1);
+    }
+    
+    const url = `${apiBase}${path}`;
     
     try {
         const res = await fetch(url, options);
@@ -852,14 +899,20 @@ if (form) {
 // CONTROL UTILITIES
 // ==========================================
 
+// ==========================================
+// CONTROL UTILITIES & BACKUPS
+// ==========================================
+
 // Load demo mock data
 document.getElementById('btnLoadDemo').addEventListener('click', async function() {
     if (confirm('Load demo data? This will overwrite your current logs.')) {
         try {
+            showToast('Loading example logs...', 'info');
             await apiCall('/api/demo', 'POST');
             await syncStateFromServer();
+            showToast('Demo mock data loaded successfully!', 'success');
         } catch (e) {
-            alert('Failed to load demo data: ' + e.message);
+            showToast('Failed to load demo data: ' + e.message, 'error');
         }
     }
 });
@@ -868,18 +921,82 @@ document.getElementById('btnLoadDemo').addEventListener('click', async function(
 document.getElementById('btnResetAll').addEventListener('click', async function() {
     if (confirm('Are you sure you want to delete all logs and reset the app?')) {
         try {
+            showToast('Deleting all data...', 'info');
             await apiCall('/api/reset', 'POST');
             await syncStateFromServer();
+            showToast('All user data reset successfully.', 'success');
         } catch (e) {
-            alert('Failed to reset app: ' + e.message);
+            showToast('Failed to reset app: ' + e.message, 'error');
         }
     }
 });
 
+// JSON Backup Export
+const btnExportJSON = document.getElementById('btnExportJSON');
+if (btnExportJSON) {
+    btnExportJSON.addEventListener('click', async function() {
+        try {
+            showToast('Generating backup file...', 'info');
+            const data = await apiCall('/api/backup/export');
+            
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `finflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('JSON backup file downloaded successfully!', 'success');
+        } catch (e) {
+            showToast('Failed to export backup: ' + e.message, 'error');
+        }
+    });
+}
+
+// JSON Backup Import trigger
+window.triggerImportClick = function() {
+    const fileInput = document.getElementById('importFileInput');
+    if (fileInput) fileInput.click();
+};
+
+// JSON Backup Import file loader
+window.handleImportFile = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            showToast('Parsing backup file...', 'info');
+            const data = JSON.parse(e.target.result);
+            
+            if (!data.accounts || !data.transactions) {
+                throw new Error('Invalid backup file. Accounts and transactions properties must exist.');
+            }
+            
+            if (confirm('Importing data will overwrite all your current accounts and transactions. Proceed?')) {
+                showToast('Importing database logs...', 'info');
+                await apiCall('/api/backup/import', 'POST', data);
+                showToast('Backup restored successfully!', 'success');
+                await syncStateFromServer();
+            }
+        } catch (err) {
+            showToast('Failed to import backup: ' + err.message, 'error');
+        }
+        // Reset file input value to allow uploading the same file again if needed
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+};
+
 // Excel backup CSV export
 document.getElementById('btnExportCSV').addEventListener('click', function() {
     if (state.transactions.length === 0) {
-        alert('There are no transactions to export.');
+        showToast('There are no transactions to export.', 'error');
         return;
     }
 
@@ -900,6 +1017,7 @@ document.getElementById('btnExportCSV').addEventListener('click', function() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showToast('Excel CSV exported successfully!', 'success');
 });
 
 // Month selector change listener

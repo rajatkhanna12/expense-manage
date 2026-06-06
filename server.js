@@ -11,16 +11,16 @@ const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'finflow_secret_key_change_in_production';
 
 // Middlewares
-app.use(cors());
+app.use(cors()); // Enables cross-origin requests from GitHub Pages out of the box
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(__dirname)); // Fallback to serve static files locally
 
 // Helper: Generate UUID/Random Hex
 function generateId() {
     return crypto.randomBytes(16).toString('hex');
 }
 
-// Auth Middleware
+// Auth Verification Middleware
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -39,10 +39,10 @@ function authenticateToken(req, res, next) {
 }
 
 // ==========================================
-// AUTHENTICATION API
+// AUTHENTICATION APIs
 // ==========================================
 
-// Register a new account
+// Register
 app.post('/api/auth/register', async (req, res) => {
     const { username, pin } = req.body;
 
@@ -57,24 +57,24 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const normalizedUsername = username.trim().toLowerCase();
         
-        // Check if user already exists
+        // Check duplicate usernames
         const existingUser = await db.get('SELECT * FROM users WHERE username = $1', [normalizedUsername]);
         if (existingUser) {
             return res.status(400).json({ error: 'Username already taken' });
         }
 
-        // Hash the PIN code
+        // Hash PIN
         const pinHash = await bcrypt.hash(pin, 10);
         const userId = generateId();
 
-        // Save new user
+        // Create User
         await db.run('INSERT INTO users (id, username, pin_hash) VALUES ($1, $2, $3)', [
             userId,
             normalizedUsername,
             pinHash
         ]);
 
-        // Create default accounts for new user
+        // Prepopulate default accounts for user
         const defaultAccounts = [
             { id: 'acc-hdfc-' + userId, name: 'HDFC Bank', owner: username, type: 'bank', balance: 0 },
             { id: 'acc-sbi-' + userId, name: 'SBI Bank', owner: username, type: 'bank', balance: 0 },
@@ -89,7 +89,7 @@ app.post('/api/auth/register', async (req, res) => {
             );
         }
 
-        // Create default categories for new user
+        // Prepopulate default categories for user
         const defaultCategories = [
             { name: 'Food & Groceries', type: 'expense', color: '#F59E0B' },
             { name: 'Rent & Bills', type: 'expense', color: '#3B82F6' },
@@ -108,7 +108,7 @@ app.post('/api/auth/register', async (req, res) => {
             );
         }
 
-        // Generate session JWT token
+        // Generate Token
         const token = jwt.sign({ id: userId, username: normalizedUsername }, JWT_SECRET, { expiresIn: '30d' });
 
         res.status(201).json({
@@ -133,19 +133,16 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const normalizedUsername = username.trim().toLowerCase();
         
-        // Find user
         const user = await db.get('SELECT * FROM users WHERE username = $1', [normalizedUsername]);
         if (!user) {
             return res.status(401).json({ error: 'Invalid username or passcode' });
         }
 
-        // Match PIN
         const isValid = await bcrypt.compare(pin, user.pin_hash);
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid username or passcode' });
         }
 
-        // Generate JWT token
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
 
         res.json({
@@ -160,7 +157,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ==========================================
-// ACCOUNTS API
+// ACCOUNTS APIs
 // ==========================================
 
 // Get accounts
@@ -178,7 +175,7 @@ app.get('/api/accounts', authenticateToken, async (req, res) => {
 app.post('/api/accounts', authenticateToken, async (req, res) => {
     const { name, owner, initialBalance, type } = req.body;
 
-    if (!name || !owner || type === undefined) {
+    if (!name || !owner || !type) {
         return res.status(400).json({ error: 'Missing required account fields' });
     }
 
@@ -202,17 +199,14 @@ app.post('/api/accounts', authenticateToken, async (req, res) => {
 // Delete account
 app.delete('/api/accounts/:id', authenticateToken, async (req, res) => {
     try {
-        // Confirm account ownership
         const account = await db.get('SELECT * FROM accounts WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
         if (!account) {
             return res.status(404).json({ error: 'Account not found or access denied' });
         }
 
-        // Delete account (cascade deletes transaction records on foreign key, or sets account references to NULL depending on constraints)
-        // Since sqlite/pg has standard delete, let's run it
         await db.run('DELETE FROM accounts WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
 
-        // Clean up transactions associated with this account (if they aren't fully deleted, let's clear them)
+        // Clean up transfers with missing links
         await db.run(
             'DELETE FROM transactions WHERE user_id = $1 AND from_account IS NULL AND to_account IS NULL AND type = $2',
             [req.user.id, 'transfer']
@@ -226,7 +220,7 @@ app.delete('/api/accounts/:id', authenticateToken, async (req, res) => {
 });
 
 // ==========================================
-// TRANSACTIONS API
+// TRANSACTIONS APIs
 // ==========================================
 
 // Get transactions
@@ -290,20 +284,17 @@ app.delete('/api/transactions/:id', authenticateToken, async (req, res) => {
 });
 
 // ==========================================
-// CATEGORIES API
+// CATEGORIES APIs
 // ==========================================
 
-// Get custom categories
+// Get categories
 app.get('/api/categories', authenticateToken, async (req, res) => {
     try {
         const categories = await db.query('SELECT * FROM categories WHERE user_id = $1 ORDER BY name ASC', [req.user.id]);
-        
-        // Group by type (expense / income)
         const grouped = { expense: [], income: [] };
         categories.forEach(cat => {
             if (grouped[cat.type]) grouped[cat.type].push(cat.name);
         });
-
         res.json(grouped);
     } catch (err) {
         console.error('Error fetching categories:', err);
@@ -311,7 +302,7 @@ app.get('/api/categories', authenticateToken, async (req, res) => {
     }
 });
 
-// Create custom category
+// Create category
 app.post('/api/categories', authenticateToken, async (req, res) => {
     const { name, type } = req.body;
 
@@ -351,19 +342,17 @@ app.post('/api/categories', authenticateToken, async (req, res) => {
 });
 
 // ==========================================
-// SYSTEM / MOCK DATA UTILITIES
+// SYSTEM SEED & RESET APIs
 // ==========================================
 
-// Reset and load Demo Mock Data for the user
+// Reset & Load Demo Mock Data
 app.post('/api/demo', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // 1. Delete user's current transactions and accounts
         await db.run('DELETE FROM transactions WHERE user_id = $1', [userId]);
         await db.run('DELETE FROM accounts WHERE user_id = $1', [userId]);
 
-        // 2. Insert mock accounts with initial balances
         const mockAccounts = [
             { id: 'acc-hdfc-' + userId, name: 'HDFC Bank', owner: req.user.username, type: 'bank', balance: 25000 },
             { id: 'acc-sbi-' + userId, name: 'SBI Bank', owner: req.user.username, type: 'bank', balance: 15000 },
@@ -378,7 +367,6 @@ app.post('/api/demo', authenticateToken, async (req, res) => {
             );
         }
 
-        // Helper for mock transaction dates
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonthNum = today.getMonth();
@@ -398,25 +386,17 @@ app.post('/api/demo', authenticateToken, async (req, res) => {
             return `${targetYear}-${m}-${d}`;
         };
 
-        // 3. Insert mock transactions
         const mockTxs = [
-            // Previous Month Income
             { id: 't1-' + userId, description: 'Client A Project Payment', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(-1, 1), from: null, to: 'acc-hdfc-' + userId },
             { id: 't2-' + userId, description: 'Freelance Design Work', amount: 5500, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(-1, 15), from: null, to: 'acc-sbi-' + userId },
-            
-            // Previous Month Expenses
             { id: 't3-' + userId, description: 'Apartment Rent HDFC', amount: 12000, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(-1, 1), from: 'acc-hdfc-' + userId, to: null },
             { id: 't4-' + userId, description: 'Weekly Groceries Cash', amount: 2800, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 5), from: 'acc-cash-' + userId, to: null },
             { id: 't5-' + userId, description: 'Savings Allocation', amount: 15000, type: 'transfer', category: 'Transfer', date: formatRelativeDate(-1, 10), from: 'acc-hdfc-' + userId, to: 'acc-savings-' + userId },
             { id: 't6-' + userId, description: 'Dining out with Friends', amount: 1600, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 14), from: 'acc-sbi-' + userId, to: null },
             { id: 't7-' + userId, description: 'Online Shopping HDFC', amount: 2500, type: 'expense', category: 'Shopping & Entertainment', date: formatRelativeDate(-1, 20), from: 'acc-hdfc-' + userId, to: null },
             { id: 't8-' + userId, description: 'Medicines purchase', amount: 800, type: 'expense', category: 'Others', date: formatRelativeDate(-1, 25), from: 'acc-cash-' + userId, to: null },
-
-            // Current Month Income
             { id: 't9-' + userId, description: 'Corporate Job Salary', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(0, 1), from: null, to: 'acc-hdfc-' + userId },
-            { id: 't10-' + userId, description: 'Consulting Contract Work', amount: 8000, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(0, 4), from: null, to: 'acc-hdfc-' + userId },
-            
-            // Current Month Expenses
+            { id: 't10-' + userId, description: 'Consulting Work', amount: 8000, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(0, 4), from: null, to: 'acc-hdfc-' + userId },
             { id: 't11-' + userId, description: 'Apartment Rent HDFC', amount: 12500, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 1), from: 'acc-hdfc-' + userId, to: null },
             { id: 't12-' + userId, description: 'Weekly Groceries Restock', amount: 3100, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(0, 3), from: 'acc-sbi-' + userId, to: null },
             { id: 't13-' + userId, description: 'Savings Transfer', amount: 10000, type: 'transfer', category: 'Transfer', date: formatRelativeDate(0, 5), from: 'acc-hdfc-' + userId, to: 'acc-savings-' + userId },
@@ -438,15 +418,12 @@ app.post('/api/demo', authenticateToken, async (req, res) => {
     }
 });
 
-// Clear All Data for the user (Reset User Account)
+// Reset
 app.post('/api/reset', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        
-        // Delete user's transactions and accounts
         await db.run('DELETE FROM transactions WHERE user_id = $1', [userId]);
         await db.run('DELETE FROM accounts WHERE user_id = $1', [userId]);
-
         res.json({ message: 'All user data reset successfully' });
     } catch (err) {
         console.error('Error resetting user data:', err);
@@ -454,12 +431,94 @@ app.post('/api/reset', authenticateToken, async (req, res) => {
     }
 });
 
-// Fallback to serving the main SPA page for client side routes
+// Export Backup
+app.get('/api/backup/export', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const accounts = await db.query('SELECT * FROM accounts WHERE user_id = $1', [userId]);
+        const transactions = await db.query('SELECT * FROM transactions WHERE user_id = $1', [userId]);
+        const categories = await db.query('SELECT * FROM categories WHERE user_id = $1', [userId]);
+        res.json({ accounts, transactions, categories });
+    } catch (err) {
+        console.error('Error exporting backup:', err);
+        res.status(500).json({ error: 'Failed to export backup data' });
+    }
+});
+
+// Import Backup
+app.post('/api/backup/import', authenticateToken, async (req, res) => {
+    const { accounts, transactions, categories } = req.body;
+
+    if (!Array.isArray(accounts) || !Array.isArray(transactions)) {
+        return res.status(400).json({ error: 'Invalid backup data format. Accounts and transactions lists are required.' });
+    }
+
+    const userId = req.user.id;
+
+    try {
+        // Run as a transaction
+        await db.run('BEGIN');
+
+        // Delete existing items
+        await db.run('DELETE FROM transactions WHERE user_id = $1', [userId]);
+        await db.run('DELETE FROM accounts WHERE user_id = $1', [userId]);
+        await db.run('DELETE FROM categories WHERE user_id = $1', [userId]);
+
+        // Insert accounts
+        for (const acc of accounts) {
+            await db.run(
+                'INSERT INTO accounts (id, user_id, name, owner, initial_balance, type) VALUES ($1, $2, $3, $4, $5, $6)',
+                [acc.id, userId, acc.name, acc.owner, acc.initial_balance || 0, acc.type]
+            );
+        }
+
+        // Insert categories if present in backup, otherwise fallback to defaults
+        const catsToInsert = Array.isArray(categories) ? categories : [];
+        for (const cat of catsToInsert) {
+            await db.run(
+                'INSERT INTO categories (id, user_id, name, type, color) VALUES ($1, $2, $3, $4, $5)',
+                [cat.id || ('cat-' + generateId()), userId, cat.name, cat.type, cat.color || '#64748B']
+            );
+        }
+
+        // Insert transactions
+        for (const tx of transactions) {
+            await db.run(
+                'INSERT INTO transactions (id, user_id, description, amount, type, category, date, from_account, to_account) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+                [
+                    tx.id,
+                    userId,
+                    tx.description,
+                    tx.amount,
+                    tx.type,
+                    tx.category,
+                    tx.date,
+                    tx.from_account || null,
+                    tx.to_account || null
+                ]
+            );
+        }
+
+        await db.run('COMMIT');
+        res.json({ message: 'Backup data imported successfully' });
+    } catch (err) {
+        try {
+            await db.run('ROLLBACK');
+        } catch (rollbackErr) {
+            // Ignore rollback errors if already rolled back
+        }
+        console.error('Error importing backup:', err);
+        res.status(500).json({ error: 'Failed to restore backup: ' + err.message });
+    }
+});
+
+
+// Single Page Application static fallback routing
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start Express Server after database initialization
+// Start Server after DB verification
 db.initDatabase().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`===================================================`);

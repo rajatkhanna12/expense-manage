@@ -20,7 +20,7 @@ if (isPostgres) {
         if (err) {
             console.error('Error opening SQLite database:', err);
         } else {
-            // Enable foreign keys in SQLite
+            // Enable foreign keys
             sqliteDb.run('PRAGMA foreign_keys = ON;', (err) => {
                 if (err) console.error('Error enabling foreign keys:', err);
             });
@@ -38,7 +38,6 @@ function prepareQuery(sql, params) {
     }
 }
 
-// Run a query and return all matching rows (SELECT)
 function query(sql, params = []) {
     const prepared = prepareQuery(sql, params);
     return new Promise((resolve, reject) => {
@@ -56,7 +55,6 @@ function query(sql, params = []) {
     });
 }
 
-// Run a query and return the first row (SELECT LIMIT 1)
 function get(sql, params = []) {
     const prepared = prepareQuery(sql, params);
     return new Promise((resolve, reject) => {
@@ -74,7 +72,6 @@ function get(sql, params = []) {
     });
 }
 
-// Run a query that doesn't return rows (INSERT, UPDATE, DELETE)
 function run(sql, params = []) {
     const prepared = prepareQuery(sql, params);
     return new Promise((resolve, reject) => {
@@ -92,7 +89,6 @@ function run(sql, params = []) {
     });
 }
 
-// Initialize tables
 async function initDatabase() {
     console.log('Initializing database tables...');
     try {
