@@ -13,7 +13,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'finflow_secret_key_change_in_produ
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
 
 // Helper: Generate UUID/Random Hex
 function generateId() {
@@ -456,7 +456,7 @@ app.post('/api/reset', authenticateToken, async (req, res) => {
 
 // Fallback to serving the main SPA page for client side routes
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start Express Server after database initialization
