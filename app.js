@@ -325,7 +325,12 @@ function renderAccountsWidget(balances, formatFn) {
         
         item.innerHTML = `
             <div class="account-name-group">
-                <span class="account-name">${escapeHtml(acc.name)}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="account-name">${escapeHtml(acc.name)}</span>
+                    <button class="btn-delete-acc" onclick="deleteAccount('${acc.id}')" title="Delete Account">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
                 <span class="account-type-badge">${typeLabel}</span>
             </div>
             <div class="account-balance">${formatFn(bal)}</div>
@@ -657,6 +662,83 @@ window.triggerTransfer = function() {
     showPage('add-log');
     setFormType('transfer');
 };
+
+// ==========================================
+// DYNAMIC ACCOUNT CREATION & DELETION DIALOGS
+// ==========================================
+window.openAddAccountModal = function() {
+    const modal = document.getElementById('modal-add-account');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('newAccName').value = '';
+        document.getElementById('newAccBalance').value = '0';
+        document.getElementById('newAccType').value = 'bank';
+    }
+};
+
+window.closeAddAccountModal = function() {
+    const modal = document.getElementById('modal-add-account');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+window.deleteAccount = function(accId) {
+    const acc = state.accounts.find(a => a.id === accId);
+    if (!acc) return;
+    
+    if (confirm(`Are you sure you want to delete the account "${acc.name}"? All associated transactions will also be permanently deleted!`)) {
+        // Delete the account
+        state.accounts = state.accounts.filter(a => a.id !== accId);
+        // Delete associated transactions
+        state.transactions = state.transactions.filter(tx => tx.fromAccount !== accId && tx.toAccount !== accId);
+        
+        saveState();
+        updateAccountDropdowns();
+        renderAll();
+    }
+};
+
+// Form listener for new account addition
+const addAccountForm = document.getElementById('addAccountForm');
+if (addAccountForm) {
+    addAccountForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('newAccName').value.trim();
+        const initialBalance = parseFloat(document.getElementById('newAccBalance').value);
+        const type = document.getElementById('newAccType').value;
+        
+        if (!name || isNaN(initialBalance) || initialBalance < 0 || !type) {
+            alert('Please fill out all fields correctly!');
+            return;
+        }
+        
+        // Check duplicate names
+        const exists = state.accounts.some(a => a.name.toLowerCase() === name.toLowerCase());
+        if (exists) {
+            alert('An account with this name already exists!');
+            return;
+        }
+        
+        const newAccount = {
+            id: 'acc-' + Date.now(),
+            name,
+            initialBalance,
+            type
+        };
+        
+        state.accounts.push(newAccount);
+        saveState();
+        
+        // Refresh UI dropdown selectors and render balances
+        updateAccountDropdowns();
+        renderAll();
+        
+        // Close Modal
+        closeAddAccountModal();
+    });
+}
 
 // Form submit handler
 const form = document.getElementById('simpleLogForm');
