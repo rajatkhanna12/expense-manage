@@ -808,80 +808,30 @@ body::after {
     margin-top: -0.75rem;
 }
 
-/* Pin Dots indicators */
-.pin-dots {
-    display: flex;
-    gap: 1.25rem;
-    margin: 1.25rem 0;
-}
-
-.dot {
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    border: 2px solid rgba(15, 23, 42, 0.15);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dot.filled {
-    background: var(--primary);
-    border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
-    transform: scale(1.25);
-}
-
-/* Pin Keypad Grid */
-.pin-pad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+/* Lock Screen Input Fields Styling */
+.lock-input-group {
     width: 100%;
-    margin-top: 0.5rem;
 }
 
-.pin-btn {
-    background: rgba(15, 23, 42, 0.03);
-    border: 1px solid rgba(15, 23, 42, 0.05);
-    color: var(--text-primary);
-    font-size: 1.45rem;
+.lock-input-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    font-family: inherit;
+    font-size: 0.95rem;
     font-weight: 600;
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    transition: all 0.2s ease;
+    text-align: center;
     outline: none;
+    transition: var(--transition-fast);
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: var(--shadow-sm);
 }
 
-.pin-btn:hover {
-    background: rgba(15, 23, 42, 0.06);
-    border-color: rgba(15, 23, 42, 0.12);
-}
-
-.pin-btn:active {
-    background: var(--primary-glow);
-    border-color: var(--primary);
-    color: var(--primary);
-    transform: scale(0.9);
-    box-shadow: 0 0 12px rgba(79, 70, 229, 0.2);
-}
-
-.pin-btn.clear, .pin-btn.delete {
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: transparent;
-    border-color: transparent;
-    color: var(--text-secondary);
-}
-
-.pin-btn.clear:hover, .pin-btn.delete:hover {
-    color: var(--text-primary);
-    background: rgba(15, 23, 42, 0.05);
-    border-radius: 50%;
+.lock-input-group input:focus {
+    border-color: var(--border-focus);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
 }
 
 .lock-footer {

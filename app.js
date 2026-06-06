@@ -1052,7 +1052,6 @@ window.showPage = function(pageId) {
 // ==========================================
 // SECURITY LOGIN & REGISTRATION LOCK SCREEN
 // ==========================================
-let pinBuffer = '';
 let authMode = 'login'; // 'login' or 'register'
 
 window.toggleAuthMode = function() {
@@ -1061,20 +1060,24 @@ window.toggleAuthMode = function() {
     const lockSubtitle = document.getElementById('lockSubtitle');
     const authToggleLabel = document.getElementById('authToggleLabel');
     const authToggleLink = document.getElementById('authToggleLink');
+    const btnAuthSubmit = document.getElementById('btnAuthSubmit');
     
     if (authMode === 'login') {
         if (lockTitle) lockTitle.textContent = 'Login to FinFlow';
         if (lockSubtitle) lockSubtitle.textContent = 'Enter your credentials to access your logs';
         if (authToggleLabel) authToggleLabel.textContent = 'New user?';
         if (authToggleLink) authToggleLink.textContent = 'Create Account';
+        if (btnAuthSubmit) btnAuthSubmit.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
     } else {
         if (lockTitle) lockTitle.textContent = 'Register Account';
-        if (lockSubtitle) lockSubtitle.textContent = 'Choose a username and 4-digit passcode';
+        if (lockSubtitle) lockSubtitle.textContent = 'Choose a username and password (min 6 characters)';
         if (authToggleLabel) authToggleLabel.textContent = 'Already have an account?';
         if (authToggleLink) authToggleLink.textContent = 'Login';
+        if (btnAuthSubmit) btnAuthSubmit.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register';
     }
-    pinBuffer = '';
-    updatePinDots();
+    
+    const pwField = document.getElementById('authPassword');
+    if (pwField) pwField.value = '';
     const footerMsg = document.getElementById('lockFooterMessage');
     if (footerMsg) footerMsg.textContent = '';
 };
@@ -1101,74 +1104,46 @@ function setupLockScreenState() {
         const lockSubtitle = document.getElementById('lockSubtitle');
         const authToggleLabel = document.getElementById('authToggleLabel');
         const authToggleLink = document.getElementById('authToggleLink');
+        const btnAuthSubmit = document.getElementById('btnAuthSubmit');
         
         if (lockTitle) lockTitle.textContent = 'Login to FinFlow';
         if (lockSubtitle) lockSubtitle.textContent = 'Enter your credentials to access your logs';
         if (authToggleLabel) authToggleLabel.textContent = 'New user?';
         if (authToggleLink) authToggleLink.textContent = 'Create Account';
+        if (btnAuthSubmit) btnAuthSubmit.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
         
         document.getElementById('authUsername').value = '';
+        const pwField = document.getElementById('authPassword');
+        if (pwField) pwField.value = '';
         showPage('lock');
     } else {
         document.getElementById('lblUserDisplay').textContent = username || 'User';
         showPage('dashboard');
         syncStateFromServer();
     }
-    updatePinDots();
 }
 
-function updatePinDots() {
-    const dots = document.querySelectorAll('.pin-dots .dot');
-    dots.forEach((dot, idx) => {
-        if (idx < pinBuffer.length) {
-            dot.classList.add('filled');
-        } else {
-            dot.classList.remove('filled');
-        }
-    });
-}
-
-window.pressPin = function(num) {
-    if (pinBuffer.length >= 4) return;
-    
-    pinBuffer += num;
-    updatePinDots();
-    
-    const footerMsg = document.getElementById('lockFooterMessage');
-    if (footerMsg) footerMsg.textContent = '';
-
-    if (pinBuffer.length === 4) {
-        setTimeout(checkPinEntry, 200);
-    }
-};
-
-window.clearPin = function() {
-    pinBuffer = '';
-    updatePinDots();
-    const footerMsg = document.getElementById('lockFooterMessage');
-    if (footerMsg) footerMsg.textContent = '';
-};
-
-window.deletePin = function() {
-    if (pinBuffer.length > 0) {
-        pinBuffer = pinBuffer.slice(0, -1);
-        updatePinDots();
-    }
-    const footerMsg = document.getElementById('lockFooterMessage');
-    if (footerMsg) footerMsg.textContent = '';
-};
-
-async function checkPinEntry() {
+async function handleAuthSubmit() {
     const usernameInput = document.getElementById('authUsername');
+    const passwordInput = document.getElementById('authPassword');
     const footerMsg = document.getElementById('lockFooterMessage');
     
-    if (!usernameInput || !usernameInput.value.trim()) {
+    if (!usernameInput || !usernameInput.value.trim() || !passwordInput || !passwordInput.value) {
         if (footerMsg) {
-            footerMsg.textContent = 'Please enter username first!';
+            footerMsg.textContent = 'Username and password are required!';
             footerMsg.style.color = 'var(--danger)';
         }
-        pinBuffer = '';
-        updatePinDots();
+        return;
+    }
+    
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+    
+    if (authMode === 'register' && password.length < 6) {
+        if (footerMsg) {
+            footerMsg.textContent = 'Password must be at least 6 characters!';
+            footerMsg.style.color = 'var(--danger)';
+        }
         return;
     }
     
@@ -1182,8 +1157,6 @@ async function checkPinEntry() {
                     footerMsg.textContent = 'Please enter your backend URL!';
                     footerMsg.style.color = 'var(--danger)';
                 }
-                pinBuffer = '';
-                updatePinDots();
                 return;
             }
             // Add https:// protocol if missing
@@ -1194,9 +1167,6 @@ async function checkPinEntry() {
         }
     }
     
-    const username = usernameInput.value.trim();
-    const pin = pinBuffer;
-    
     if (footerMsg) {
         footerMsg.textContent = authMode === 'login' ? 'Logging in...' : 'Registering...';
         footerMsg.style.color = 'var(--text-secondary)';
@@ -1204,7 +1174,7 @@ async function checkPinEntry() {
     
     try {
         const path = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
-        const data = await apiCall(path, 'POST', { username, pin });
+        const data = await apiCall(path, 'POST', { username, password });
         
         // Save auth data
         localStorage.setItem('finflow_token', data.token);
@@ -1214,20 +1184,18 @@ async function checkPinEntry() {
         // Setup User display
         document.getElementById('lblUserDisplay').textContent = data.user.username;
         
-        pinBuffer = '';
-        updatePinDots();
         if (footerMsg) footerMsg.textContent = '';
+        passwordInput.value = '';
         
         // Sync & render
         await syncStateFromServer();
         showPage('dashboard');
+        showToast(authMode === 'login' ? 'Logged in successfully!' : 'Registered successfully!', 'success');
     } catch (e) {
         if (footerMsg) {
             footerMsg.textContent = e.message || 'Authentication failed.';
             footerMsg.style.color = 'var(--danger)';
         }
-        pinBuffer = '';
-        updatePinDots();
     }
 }
 
@@ -1260,6 +1228,15 @@ function init() {
 
     // Set form defaults
     setFormType('expense');
+
+    // Bind login form submit
+    const authForm = document.getElementById('authForm');
+    if (authForm) {
+        authForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleAuthSubmit();
+        });
+    }
 
     // Auto sync state in background every 15 seconds if logged in
     setInterval(() => {

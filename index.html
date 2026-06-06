@@ -26,47 +26,34 @@
             <h2 id="lockTitle">Login to FinFlow</h2>
             <p id="lockSubtitle">Enter your credentials to access your logs</p>
             
-            <!-- Username Input Field -->
-            <div class="lock-input-group" style="width: 100%; max-width: 280px; margin: 0 auto 1.25rem;">
-                <input type="text" id="authUsername" placeholder="Enter Username" required
-                       style="width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-family: inherit; font-size: 0.95rem; font-weight: 600; text-align: center; outline: none; transition: var(--transition-fast); background: rgba(255, 255, 255, 0.75); box-shadow: var(--shadow-sm);">
-            </div>
-            
-            <!-- Static Host Warning & Backend URL config -->
-            <div id="staticHostWarning" style="display: none; width: 100%; max-width: 280px; margin: -0.5rem auto 1.25rem; font-size: 0.75rem; text-align: left; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.75rem; border-radius: var(--radius-sm); color: #B45309;">
-                <p style="margin: 0 0 0.4rem 0; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Static Hosting Detected</p>
-                <p style="margin: 0 0 0.6rem 0; font-size: 0.7rem; line-height: 1.4;">GitHub Pages is static. Please enter your deployed backend URL to connect your database, or open your backend URL directly.</p>
-                <input type="text" id="authBackendUrl" placeholder="https://your-app.onrender.com" 
-                       style="width: 100%; padding: 0.45rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.3); font-family: inherit; font-size: 0.8rem; outline: none; background: #FFF; box-shadow: var(--shadow-sm); box-sizing: border-box;">
-            </div>
-            
-            <!-- Pin Dots -->
-            <div class="pin-dots">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
+            <!-- Auth Form -->
+            <form id="authForm" style="width: 100%; max-width: 280px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.85rem;">
+                <div class="lock-input-group">
+                    <input type="text" id="authUsername" placeholder="Enter Username" required
+                           style="width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-family: inherit; font-size: 0.95rem; font-weight: 600; text-align: center; outline: none; transition: var(--transition-fast); background: rgba(255, 255, 255, 0.75); box-shadow: var(--shadow-sm);">
+                </div>
 
-            <!-- PIN Pad Keypad -->
-            <div class="pin-pad">
-                <button type="button" class="pin-btn" onclick="pressPin('1')">1</button>
-                <button type="button" class="pin-btn" onclick="pressPin('2')">2</button>
-                <button type="button" class="pin-btn" onclick="pressPin('3')">3</button>
-                <button type="button" class="pin-btn" onclick="pressPin('4')">4</button>
-                <button type="button" class="pin-btn" onclick="pressPin('5')">5</button>
-                <button type="button" class="pin-btn" onclick="pressPin('6')">6</button>
-                <button type="button" class="pin-btn" onclick="pressPin('7')">7</button>
-                <button type="button" class="pin-btn" onclick="pressPin('8')">8</button>
-                <button type="button" class="pin-btn" onclick="pressPin('9')">9</button>
-                <button type="button" class="pin-btn clear" onclick="clearPin()">Clear</button>
-                <button type="button" class="pin-btn" onclick="pressPin('0')">0</button>
-                <button type="button" class="pin-btn delete" onclick="deletePin()"><i class="fa-solid fa-delete-left"></i></button>
-            </div>
+                <div class="lock-input-group">
+                    <input type="password" id="authPassword" placeholder="Enter Password" required
+                           style="width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-family: inherit; font-size: 0.95rem; font-weight: 600; text-align: center; outline: none; transition: var(--transition-fast); background: rgba(255, 255, 255, 0.75); box-shadow: var(--shadow-sm);">
+                </div>
+                
+                <div id="staticHostWarning" style="display: none; width: 100%; font-size: 0.75rem; text-align: left; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.75rem; border-radius: var(--radius-sm); color: #B45309; box-sizing: border-box;">
+                    <p style="margin: 0 0 0.4rem 0; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Static Hosting Detected</p>
+                    <p style="margin: 0 0 0.6rem 0; font-size: 0.7rem; line-height: 1.4;">GitHub Pages is static. Please enter your deployed backend URL to connect your database, or open your backend URL directly.</p>
+                    <input type="text" id="authBackendUrl" placeholder="https://your-app.onrender.com" 
+                           style="width: 100%; padding: 0.45rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.3); font-family: inherit; font-size: 0.8rem; outline: none; background: #FFF; box-shadow: var(--shadow-sm); box-sizing: border-box;">
+                </div>
+
+                <button type="submit" id="btnAuthSubmit" class="btn-submit" style="margin-top: 0.25rem;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </button>
+            </form>
+            
             <div class="lock-footer" id="lockFooterMessage"></div>
 
             <!-- Toggle Auth Mode (Register vs Login) -->
-            <div class="auth-toggle-container" style="margin-top: 1.25rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+            <div class="auth-toggle-container" style="margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
                 <span id="authToggleLabel">New user?</span>
                 <a href="javascript:void(0)" id="authToggleLink" onclick="toggleAuthMode()" style="color: var(--primary); text-decoration: none; margin-left: 0.25rem; border-bottom: 1px dashed var(--primary);">Create Account</a>
             </div>

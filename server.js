@@ -44,14 +44,14 @@ function authenticateToken(req, res, next) {
 
 // Register
 app.post('/api/auth/register', async (req, res) => {
-    const { username, pin } = req.body;
+    const { username, password } = req.body;
 
-    if (!username || !pin) {
-        return res.status(400).json({ error: 'Username and PIN are required' });
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    if (pin.length !== 4 || isNaN(pin)) {
-        return res.status(400).json({ error: 'PIN must be a 4-digit number' });
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
 
     try {
@@ -63,15 +63,15 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ error: 'Username already taken' });
         }
 
-        // Hash PIN
-        const pinHash = await bcrypt.hash(pin, 10);
+        // Hash password
+        const passwordHash = await bcrypt.hash(password, 10);
         const userId = generateId();
 
         // Create User
-        await db.run('INSERT INTO users (id, username, pin_hash) VALUES ($1, $2, $3)', [
+        await db.run('INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)', [
             userId,
             normalizedUsername,
-            pinHash
+            passwordHash
         ]);
 
         // Prepopulate default accounts for user
@@ -124,10 +124,10 @@ app.post('/api/auth/register', async (req, res) => {
 
 // Login
 app.post('/api/auth/login', async (req, res) => {
-    const { username, pin } = req.body;
+    const { username, password } = req.body;
 
-    if (!username || !pin) {
-        return res.status(400).json({ error: 'Username and PIN are required' });
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
     }
 
     try {
@@ -135,12 +135,12 @@ app.post('/api/auth/login', async (req, res) => {
         
         const user = await db.get('SELECT * FROM users WHERE username = $1', [normalizedUsername]);
         if (!user) {
-            return res.status(401).json({ error: 'Invalid username or passcode' });
+            return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        const isValid = await bcrypt.compare(pin, user.pin_hash);
+        const isValid = await bcrypt.compare(password, user.password_hash);
         if (!isValid) {
-            return res.status(401).json({ error: 'Invalid username or passcode' });
+            return res.status(401).json({ error: 'Invalid username or password' });
         }
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
