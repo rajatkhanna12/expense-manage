@@ -681,6 +681,27 @@ body {
     .btn-footer-secondary, .btn-footer-danger {
         width: 100%;
         justify-content: center;
-        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .lock-screen-overlay {
+        background: #FFFFFF;
+    }
+    .lock-container {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        padding: 3rem 1.5rem;
+        justify-content: center;
+        background: #FFFFFF;
+    }
+    .pin-btn {
+        width: 72px;
+        height: 72px;
+        font-size: 1.6rem;
     }
 }
