@@ -205,7 +205,7 @@ function renderAll() {
     if (netSavings < 0) {
         savingsEl.style.color = '#F43F5E'; // Red alert for negative
     } else {
-        savingsEl.style.color = '#0D9488'; // Teal for positive
+        savingsEl.style.color = '#14B8A6'; // Teal 500 for positive
     }
 
     document.getElementById('lblSavingsPct').textContent = `${savingsRate < 0 ? 0 : savingsRate}% saved from earnings`;
@@ -278,13 +278,13 @@ function renderMonthlyReportTable() {
         }
 
         const row = document.createElement('tr');
-        const savingsColor = netSavings < 0 ? '#F43F5E' : '#0D9488';
+        const savingsColor = netSavings < 0 ? '#F43F5E' : '#14B8A6';
         const rateDisplay = rate < 0 ? '0%' : `${rate}%`;
 
         row.innerHTML = `
             <td style="font-weight: 700; padding: 0.85rem 1rem;">${monthsName[targetMonth]} ${targetYear}</td>
             <td style="text-align: right; padding: 0.85rem 1rem; color: #10B981; font-weight: 600;">+${fmt(income)}</td>
-            <td style="text-align: right; padding: 0.85rem 1rem; color: #0F172A;">-${fmt(expenses)}</td>
+            <td style="text-align: right; padding: 0.85rem 1rem; color: #F8FAFC;">-${fmt(expenses)}</td>
             <td style="text-align: right; padding: 0.85rem 1rem; color: ${savingsColor}; font-weight: 700;">${fmt(netSavings)}</td>
             <td style="text-align: center; padding: 0.85rem 1rem; font-weight: 700; color: ${savingsColor};">${rateDisplay}</td>
         `;
@@ -367,10 +367,10 @@ function renderDoughnutChart(categorySums) {
         categoryChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['No Kharch logged'],
+                labels: ['No transactions logged'],
                 datasets: [{
                     data: [1],
-                    backgroundColor: ['#E2E8F0'],
+                    backgroundColor: ['#334155'],
                     borderWidth: 0
                 }]
             },
@@ -389,7 +389,7 @@ function renderDoughnutChart(categorySums) {
                     data,
                     backgroundColor: bgColors,
                     borderWidth: 1,
-                    borderColor: '#FFFFFF'
+                    borderColor: '#1E293B'
                 }]
             },
             options: {
@@ -399,7 +399,7 @@ function renderDoughnutChart(categorySums) {
                     legend: {
                         position: 'right',
                         labels: {
-                            color: '#475569',
+                            color: '#94A3B8',
                             boxWidth: 10,
                             font: { family: 'Plus Jakarta Sans', size: 10, weight: '600' }
                         }
