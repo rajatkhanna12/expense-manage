@@ -944,7 +944,7 @@ body::after {
 
 @media (max-width: 768px) {
     body {
-        padding: 1.5rem 1rem;
+        padding: 1rem 0.75rem;
     }
 
     .kpi-row {
@@ -963,6 +963,68 @@ body::after {
     .form-row {
         flex-direction: column;
         gap: 0;
+    }
+
+    /* Mobile Header Stacking */
+    .simple-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 1.25rem 1rem;
+        text-align: center;
+    }
+
+    .logo {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .header-right {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.85rem;
+    }
+
+    .user-profile-badge {
+        width: 100%;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+    }
+
+    .month-selector {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .month-selector select {
+        flex: 1;
+        max-width: 70%;
+    }
+
+    .btn-add-trigger {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem;
+    }
+
+    /* Mobile Card Header Stacking */
+    .card-header.flex-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+    }
+
+    .card-header.flex-row > div {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .card-header.flex-row h3 {
+        text-align: center;
+        width: 100%;
     }
 
     .simple-footer {
@@ -1033,6 +1095,53 @@ body::after {
     }
     .auth-toggle-container {
         margin-top: 0.75rem;
+    }
+
+    /* Mobile dashboard optimizations */
+    .card {
+        padding: 1rem !important;
+    }
+    .log-item {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem !important;
+    }
+    .log-info-group {
+        width: 100%;
+    }
+    .log-subdetails {
+        flex-wrap: wrap;
+        gap: 0.35rem 0.5rem;
+    }
+    .log-value-group {
+        justify-content: space-between;
+        width: 100%;
+        border-top: 1px dashed rgba(15, 23, 42, 0.06);
+        padding-top: 0.5rem;
+        margin-top: 0.25rem;
+    }
+    .account-item {
+        padding: 0.75rem 1rem !important;
+    }
+    .account-name-group {
+        flex: 1;
+        min-width: 0;
+    }
+    .account-name {
+        font-size: 0.85rem !important;
+        word-break: break-word;
+    }
+    .account-balance {
+        font-size: 0.9rem !important;
+    }
+    .modal-content {
+        padding: 1.25rem !important;
+        width: 95% !important;
+    }
+    .btn-toggle {
+        padding: 0.5rem 0.25rem !important;
+        font-size: 0.8rem !important;
     }
 }
 
