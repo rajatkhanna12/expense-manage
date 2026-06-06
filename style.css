@@ -979,23 +979,60 @@ body::after {
 @media (max-width: 480px) {
     #page-lock {
         background: #F8FAFC;
-        align-items: flex-start;
-        padding-top: 4rem;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 1.5rem 1rem;
+        overflow-y: auto;
+        box-sizing: border-box;
     }
     .lock-container {
         border: none;
         border-radius: 0;
         box-shadow: none;
         width: 100%;
-        height: 100%;
         max-width: 100%;
-        padding: 1rem 0.5rem;
+        padding: 0.5rem;
         background: transparent;
+        margin: 0 auto;
+        gap: 1rem;
+    }
+    .lock-logo {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+        margin-bottom: 0;
+    }
+    .lock-container h2 {
+        font-size: 1.3rem;
+    }
+    .lock-container p {
+        font-size: 0.8rem;
+    }
+    .pin-dots {
+        margin: 0.75rem 0;
+        gap: 1rem;
+    }
+    .dot {
+        width: 12px;
+        height: 12px;
+    }
+    .pin-pad {
+        gap: 0.65rem;
+        margin-top: 0.25rem;
+        max-width: 260px;
+        margin-left: auto;
+        margin-right: auto;
     }
     .pin-btn {
-        width: 72px;
-        height: 72px;
-        font-size: 1.6rem;
+        width: 58px;
+        height: 58px;
+        font-size: 1.25rem;
+    }
+    .pin-btn.clear, .pin-btn.delete {
+        font-size: 0.8rem;
+    }
+    .auth-toggle-container {
+        margin-top: 0.75rem;
     }
 }
 
