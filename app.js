@@ -367,6 +367,7 @@ function renderAccountsWidget(balances, formatFn) {
         const bal = balances[acc.id] || 0;
         const item = document.createElement('div');
         item.className = 'account-item';
+        item.setAttribute('onclick', `showAccountStatement('${acc.id}')`);
         
         let typeLabel = 'Bank Account';
         if (acc.type === 'savings') typeLabel = 'Savings Account';
@@ -376,7 +377,7 @@ function renderAccountsWidget(balances, formatFn) {
             <div class="account-name-group">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span class="account-name">${escapeHtml(acc.name)}</span>
-                    <button class="btn-delete-acc" onclick="deleteAccount('${acc.id}')" title="Delete Account">
+                    <button class="btn-delete-acc" onclick="event.stopPropagation(); deleteAccount('${acc.id}')" title="Delete Account">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
@@ -387,6 +388,112 @@ function renderAccountsWidget(balances, formatFn) {
         listContainer.appendChild(item);
     });
 }
+
+window.showAccountStatement = function(accId) {
+    const acc = state.accounts.find(a => a.id === accId);
+    if (!acc) return;
+    
+    // Filter transactions involving this account
+    const accTxs = state.transactions.filter(tx => tx.from_account === accId || tx.to_account === accId);
+    
+    // Calculate dynamic totals for this account
+    let inflow = 0;
+    let outflow = 0;
+    
+    accTxs.forEach(tx => {
+        if (tx.type === 'income' && tx.to_account === accId) {
+            inflow += tx.amount;
+        } else if (tx.type === 'expense' && tx.from_account === accId) {
+            outflow += tx.amount;
+        } else if (tx.type === 'transfer') {
+            if (tx.to_account === accId) {
+                inflow += tx.amount;
+            }
+            if (tx.from_account === accId) {
+                outflow += tx.amount;
+            }
+        }
+    });
+    
+    const balance = (acc.initial_balance || 0) + inflow - outflow;
+    
+    // Format helpers
+    const fmt = (val) => '₹' + Number(val).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Update Header and KPI UI
+    document.getElementById('statementAccountName').textContent = `${acc.name} — Statement (${acc.owner || 'Self'})`;
+    document.getElementById('lblStatementInflow').textContent = fmt(inflow);
+    document.getElementById('lblStatementOutflow').textContent = fmt(outflow);
+    document.getElementById('lblStatementBalance').textContent = fmt(balance);
+    
+    // Render logs list
+    const listContainer = document.getElementById('statementLogsList');
+    const emptyState = document.getElementById('statementEmptyState');
+    if (listContainer) {
+        listContainer.innerHTML = '';
+        
+        if (accTxs.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+        } else {
+            if (emptyState) emptyState.style.display = 'none';
+            
+            // Sort newest transactions at the top
+            const sorted = [...accTxs].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sorted.forEach(tx => {
+                const item = document.createElement('div');
+                item.className = 'log-item';
+                
+                const dateObj = new Date(tx.date);
+                const dateStr = isNaN(dateObj) ? tx.date : dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                
+                let typeSign = '';
+                let amountClass = '';
+                let flowDirection = '';
+                
+                if (tx.type === 'income') {
+                    typeSign = '+';
+                    amountClass = 'plus';
+                    flowDirection = 'Inflow / Credit';
+                } else if (tx.type === 'expense') {
+                    typeSign = '-';
+                    amountClass = 'minus';
+                    flowDirection = 'Outflow / Debit';
+                } else if (tx.type === 'transfer') {
+                    if (tx.to_account === accId) {
+                        typeSign = '+';
+                        amountClass = 'plus';
+                        flowDirection = `Transfer from ${getAccountName(tx.from_account)}`;
+                    } else {
+                        typeSign = '-';
+                        amountClass = 'minus';
+                        flowDirection = `Transfer to ${getAccountName(tx.to_account)}`;
+                    }
+                }
+                
+                item.innerHTML = `
+                    <div class="log-info-group">
+                        <span class="log-title">${escapeHtml(tx.description)}</span>
+                        <div class="log-subdetails">
+                            <span class="category-tag">${tx.category}</span>
+                            <span style="font-weight: 600; color: var(--text-secondary);">${flowDirection}</span>
+                            <span>${dateStr}</span>
+                        </div>
+                    </div>
+                    <div class="log-value-group">
+                        <span class="log-amount ${amountClass}">${typeSign}${fmt(tx.amount)}</span>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+    }
+    
+    showPage('statement');
+};
 
 function renderMonthlyReportTable() {
     const tableBody = document.getElementById('monthlyReportTableBody');

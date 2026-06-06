@@ -428,11 +428,14 @@ body::after {
     justify-content: space-between;
     align-items: center;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .account-item:hover {
     background: rgba(15, 23, 42, 0.04);
     border-color: rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .account-name-group {
