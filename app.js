@@ -183,22 +183,16 @@ function getAccountName(id) {
 // DYNAMIC BALANCE LEDGER CALCULATOR
 // ==========================================
 function calculateAccountBalances(upToDateStr) {
-    let limitDate = null;
-    if (upToDateStr) {
-        const [yr, mo, dy] = upToDateStr.split('-').map(Number);
-        limitDate = new Date(yr, mo - 1, dy, 23, 59, 59);
-    }
-    
     const balances = {};
     state.accounts.forEach(acc => {
         balances[acc.id] = acc.initial_balance || 0;
     });
     
     state.transactions.forEach(tx => {
-        if (limitDate) {
-            const txDate = new Date(tx.date);
-            if (isNaN(txDate) || txDate > limitDate) {
-                return; // Skip transactions after month boundary
+        if (upToDateStr && tx.date) {
+            // Lexicographical YYYY-MM-DD string comparison avoids timezone shift issues
+            if (tx.date > upToDateStr) {
+                return; // Skip transactions after date boundary
             }
         }
         
@@ -549,16 +543,41 @@ function renderMonthlyReportTable() {
             rate = Math.round((netSavings / income) * 100);
         }
 
+        // Calculate opening and closing balance for target month
+        const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+        const closingDateStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        
+        let prevYear = targetYear;
+        let prevMonth = targetMonth - 1;
+        if (prevMonth < 0) {
+            prevMonth = 11;
+            prevYear -= 1;
+        }
+        const prevLastDay = new Date(prevYear, prevMonth + 1, 0).getDate();
+        const openingDateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(prevLastDay).padStart(2, '0')}`;
+
+        const openingBalances = calculateAccountBalances(openingDateStr);
+        const closingBalances = calculateAccountBalances(closingDateStr);
+
+        let sumOpening = 0;
+        let sumClosing = 0;
+        state.accounts.forEach(acc => {
+            sumOpening += openingBalances[acc.id] || 0;
+            sumClosing += closingBalances[acc.id] || 0;
+        });
+
         const row = document.createElement('tr');
         const savingsColor = netSavings < 0 ? '#F43F5E' : '#14B8A6';
         const rateDisplay = rate < 0 ? '0%' : `${rate}%`;
 
         row.innerHTML = `
             <td style="font-weight: 700; padding: 0.85rem 1rem;">${monthsName[targetMonth]} ${targetYear}</td>
+            <td style="text-align: right; padding: 0.85rem 1rem; color: var(--text-secondary); font-family: var(--font-heading); font-weight: 600;">${fmt(sumOpening)}</td>
             <td style="text-align: right; padding: 0.85rem 1rem; color: #10B981; font-weight: 600;">+${fmt(income)}</td>
-            <td style="text-align: right; padding: 0.85rem 1rem; color: var(--text-primary);">-${fmt(expenses)}</td>
+            <td style="text-align: right; padding: 0.85rem 1rem; color: var(--text-primary); font-weight: 600;">-${fmt(expenses)}</td>
             <td style="text-align: right; padding: 0.85rem 1rem; color: ${savingsColor}; font-weight: 700;">${fmt(netSavings)}</td>
             <td style="text-align: center; padding: 0.85rem 1rem; font-weight: 700; color: ${savingsColor};">${rateDisplay}</td>
+            <td style="text-align: right; padding: 0.85rem 1rem; color: var(--primary); font-family: var(--font-heading); font-weight: 700;">${fmt(sumClosing)}</td>
         `;
         tableBody.appendChild(row);
     });

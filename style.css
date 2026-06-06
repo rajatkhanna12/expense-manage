@@ -47,6 +47,17 @@
     -webkit-font-smoothing: antialiased;
 }
 
+/* Utilities */
+.text-right {
+    text-align: right !important;
+}
+.text-center {
+    text-align: center !important;
+}
+.text-left {
+    text-align: left !important;
+}
+
 html, body {
     overflow-x: hidden;
     max-width: 100%;
