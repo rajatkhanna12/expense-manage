@@ -475,25 +475,95 @@ body {
     background: rgba(244, 63, 94, 0.08);
 }
 
-/* Passcode Lock Screen Overlay */
-.lock-screen-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-app);
+/* Page View Containers */
+.page-view {
+    display: none;
+    animation: pageFadeIn 0.22s ease-out;
+}
+
+@keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#page-lock {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
-    opacity: 1;
-    transition: opacity 0.3s ease-out;
+    background: var(--bg-app);
+    padding: 1.5rem;
 }
 
-.lock-screen-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
+/* Form page layout styling */
+.form-container-page {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.form-header-row h2 {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.btn-back {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: var(--transition-fast);
+}
+
+.btn-back:hover {
+    color: var(--primary);
+}
+
+/* Header Trigger Add Log button styling */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-add-trigger {
+    background: var(--primary);
+    color: #FFFFFF;
+    border: none;
+    outline: none;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-add-trigger:hover {
+    background: var(--primary-hover);
+}
+
+.btn-add-trigger:active {
+    transform: scale(0.97);
 }
 
 .lock-container {
@@ -685,7 +755,7 @@ body {
 }
 
 @media (max-width: 480px) {
-    .lock-screen-overlay {
+    #page-lock {
         background: #FFFFFF;
     }
     .lock-container {

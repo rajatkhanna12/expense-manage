@@ -514,6 +514,9 @@ if (form) {
         // Reset form but preserve date and type for quick logging!
         document.getElementById('logAmount').value = '';
         document.getElementById('logDesc').value = '';
+
+        // Navigate back to dashboard
+        showPage('dashboard');
     });
 }
 
@@ -573,10 +576,28 @@ if (monthSelect) {
 }
 
 // ==========================================
-// APP STARTUP INITIALIZATION
+// NAVIGATION & PAGE VIEW SWITCHER
 // ==========================================
-function init() {
-    // Load local storage
+window.showPage = function(pageId) {
+    document.querySelectorAll('.page-view').forEach(p => {
+        p.style.display = 'none';
+    });
+    const target = document.getElementById('page-' + pageId);
+    if (target) {
+        if (pageId === 'lock') {
+            target.style.display = 'flex';
+        } else {
+            target.style.display = 'block';
+        }
+    }
+    window.scrollTo(0, 0);
+
+    // Re-render dashboard components if switching to dashboard so Chart.js has correct dimensions
+    if (pageId === 'dashboard') {
+        renderAll();
+    }
+};
+
 // ==========================================
 // PASSCODE SECURITY LOCK SCREEN LOGIC
 // ==========================================
@@ -587,20 +608,19 @@ function setupLockScreenState() {
     const savedPin = localStorage.getItem('finflow_passcode');
     const lockTitle = document.getElementById('lockTitle');
     const lockSubtitle = document.getElementById('lockSubtitle');
-    const lockScreen = document.getElementById('lockScreen');
 
     if (!savedPin) {
         // First run: Create a passcode
         isSettingPasscode = true;
         if (lockTitle) lockTitle.textContent = 'Set a Passcode';
         if (lockSubtitle) lockSubtitle.textContent = 'Choose a 4-digit PIN to lock your reports';
-        if (lockScreen) lockScreen.classList.remove('hidden');
+        showPage('lock');
     } else {
         // Normal run: Enter passcode to unlock
         isSettingPasscode = false;
         if (lockTitle) lockTitle.textContent = 'Enter Passcode';
         if (lockSubtitle) lockSubtitle.textContent = 'Secure your financial logs';
-        if (lockScreen) lockScreen.classList.remove('hidden');
+        showPage('lock');
     }
     updatePinDots();
 }
@@ -648,7 +668,6 @@ window.deletePin = function() {
 
 function checkPinEntry() {
     const footerMsg = document.getElementById('lockFooterMessage');
-    const lockScreen = document.getElementById('lockScreen');
 
     if (isSettingPasscode) {
         localStorage.setItem('finflow_passcode', pinBuffer);
@@ -656,13 +675,13 @@ function checkPinEntry() {
         isSettingPasscode = false;
         pinBuffer = '';
         updatePinDots();
-        if (lockScreen) lockScreen.classList.add('hidden');
+        showPage('dashboard');
     } else {
         const correctPin = localStorage.getItem('finflow_passcode');
         if (pinBuffer === correctPin) {
             pinBuffer = '';
             updatePinDots();
-            if (lockScreen) lockScreen.classList.add('hidden');
+            showPage('dashboard');
         } else {
             if (footerMsg) footerMsg.textContent = 'Incorrect Passcode. Try Again!';
             pinBuffer = '';
