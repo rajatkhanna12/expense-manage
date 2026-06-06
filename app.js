@@ -40,8 +40,19 @@ async function apiCall(path, method = 'GET', body = null) {
         options.body = JSON.stringify(body);
     }
     
+    // Resolve absolute path if on static host (github.io)
+    let apiBase = '';
+    if (window.location.hostname.endsWith('github.io')) {
+        apiBase = localStorage.getItem('finflow_api_url') || '';
+        if (apiBase && apiBase.endsWith('/')) {
+            apiBase = apiBase.slice(0, -1);
+        }
+    }
+    
+    const url = apiBase ? `${apiBase}${path}` : path;
+    
     try {
-        const res = await fetch(path, options);
+        const res = await fetch(url, options);
         if (res.status === 401 || res.status === 403) {
             logoutUser();
             throw new Error('Session expired. Please login again.');
@@ -52,7 +63,7 @@ async function apiCall(path, method = 'GET', body = null) {
         }
         return await res.json();
     } catch (e) {
-        console.error(`API Call failed (${path}):`, e);
+        console.error(`API Call failed (${url}):`, e);
         throw e;
     }
 }
@@ -954,6 +965,18 @@ function setupLockScreenState() {
     const token = localStorage.getItem('finflow_token');
     const username = localStorage.getItem('finflow_username');
 
+    const isStaticHost = window.location.hostname.endsWith('github.io');
+    const warningDiv = document.getElementById('staticHostWarning');
+    if (warningDiv) {
+        if (isStaticHost) {
+            warningDiv.style.display = 'block';
+            const savedUrl = localStorage.getItem('finflow_api_url') || '';
+            document.getElementById('authBackendUrl').value = savedUrl;
+        } else {
+            warningDiv.style.display = 'none';
+        }
+    }
+
     if (!token) {
         authMode = 'login';
         const lockTitle = document.getElementById('lockTitle');
@@ -1029,6 +1052,28 @@ async function checkPinEntry() {
         pinBuffer = '';
         updatePinDots();
         return;
+    }
+    
+    // Save backend server URL if on static host
+    if (window.location.hostname.endsWith('github.io')) {
+        const backendUrlInput = document.getElementById('authBackendUrl');
+        if (backendUrlInput) {
+            let backendUrl = backendUrlInput.value.trim();
+            if (!backendUrl) {
+                if (footerMsg) {
+                    footerMsg.textContent = 'Please enter your backend URL!';
+                    footerMsg.style.color = 'var(--danger)';
+                }
+                pinBuffer = '';
+                updatePinDots();
+                return;
+            }
+            // Add https:// protocol if missing
+            if (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://')) {
+                backendUrl = 'https://' + backendUrl;
+            }
+            localStorage.setItem('finflow_api_url', backendUrl);
+        }
     }
     
     const username = usernameInput.value.trim();
