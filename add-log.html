@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FinFlow — Add Transaction</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css?v=3.0">
+</head>
+<body style="padding: 2rem 1.5rem;">
+
+    <div class="form-container-page" style="max-width: 600px; margin: 0 auto;">
+        <div class="form-header-row">
+            <a href="dashboard.html" class="btn-back" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h2>Add Income / Expense</h2>
+        </div>
+        
+        <div class="card">
+            <form id="simpleLogForm">
+                <!-- 3-way toggle button group -->
+                <div class="form-group">
+                    <label>Transaction Type</label>
+                    <div class="type-toggle-group">
+                        <button type="button" class="btn-toggle active" id="btnToggleExpense" onclick="setFormType('expense')">Expense</button>
+                        <button type="button" class="btn-toggle" id="btnToggleIncome" onclick="setFormType('income')">Income</button>
+                        <button type="button" class="btn-toggle" id="btnToggleTransfer" onclick="setFormType('transfer')">Transfer</button>
+                    </div>
+                    <input type="hidden" id="logType" value="expense" required>
+                </div>
+
+                <!-- Bank Accounts selectors row -->
+                <div class="form-row" id="accountSelectorRow">
+                    <div class="form-group flex-1" id="groupFromAccount">
+                        <label for="logFromAccount">From Account</label>
+                        <select id="logFromAccount">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group flex-1" id="groupToAccount" style="display: none;">
+                        <label for="logToAccount">To Account</label>
+                        <select id="logToAccount">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Amount and Date row -->
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="logAmount">Amount (INR)</label>
+                        <input type="number" id="logAmount" min="1" placeholder="₹ Amount" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="logDate">Date</label>
+                        <input type="date" id="logDate" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group flex-2">
+                        <label for="logDesc">Description / Details</label>
+                        <input type="text" id="logDesc" placeholder="e.g. Rent, Groceries, Client Salary" required>
+                    </div>
+                    <div class="form-group flex-1" id="groupCategory">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.15rem;">
+                            <label for="logCategory" style="margin: 0;">Category</label>
+                            <button type="button" class="btn-link" onclick="openAddCategoryModal()" style="font-size: 0.75rem; padding: 0;">
+                                <i class="fa-solid fa-plus"></i> Add New
+                            </button>
+                        </div>
+                        <select id="logCategory">
+                            <!-- Options updated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-check"></i> Save Transaction Entry
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="modal-add-category" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Custom Category</h3>
+                <button class="btn-close-modal" onclick="closeAddCategoryModal()">&times;</button>
+            </div>
+            <form id="addCategoryForm">
+                <div class="form-group">
+                    <label for="newCatName">Category Name</label>
+                    <input type="text" id="newCatName" placeholder="e.g. Subscriptions, Gifts, Investment" required>
+                </div>
+                <div class="form-group">
+                    <label for="newCatType">Category Type</label>
+                    <select id="newCatType" required>
+                        <option value="expense">Expense Category</option>
+                        <option value="income">Income Category</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-plus"></i> Create Category
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JS Logic -->
+    <script src="common.js"></script>
+    <script src="add-log.js"></script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FinFlow — Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css?v=3.0">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="simple-container">
+        <!-- Header Bar -->
+        <header class="simple-header">
+            <div class="logo">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <h2>FinFlow</h2>
+                <span class="badge-app">Easy Tracker</span>
+            </div>
+            <div class="header-right">
+                <div class="user-profile-badge" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(15, 23, 42, 0.04); padding: 0.35rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; color: var(--text-secondary);">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span id="lblUserDisplay">Guest</span>
+                    <button class="btn-logout" onclick="logoutUser()" title="Logout User" style="background: none; border: none; cursor: pointer; color: var(--danger); padding: 0; font-size: 0.85rem; display: inline-flex; align-items: center; margin-left: 0.25rem; transition: var(--transition-fast);"><i class="fa-solid fa-power-off"></i></button>
+                </div>
+                <div class="month-selector">
+                    <span>Month:</span>
+                    <select id="reportMonthSelect">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <a href="add-log.html" class="btn-add-trigger" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-plus"></i> Add Transaction
+                </a>
+            </div>
+        </header>
+
+        <!-- KPI Stats Cards -->
+        <div class="kpi-row">
+            <div class="kpi-card income">
+                <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Total Inflow (Income)</span>
+                    <h3 id="lblTotalIncome">₹0.00</h3>
+                </div>
+            </div>
+            <div class="kpi-card expense">
+                <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Total Outflow (Expense)</span>
+                    <h3 id="lblTotalExpenses">₹0.00</h3>
+                </div>
+            </div>
+            <div class="kpi-card savings">
+                <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Net Savings</span>
+                    <h3 id="lblTotalSavings">₹0.00</h3>
+                    <span class="savings-pct" id="lblSavingsPct">0% saved</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two Column Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column: Transactions List -->
+            <div class="col-left">
+                <div class="card">
+                    <div class="card-header flex-row">
+                        <h3><i class="fa-solid fa-list-ul"></i> Transaction History</h3>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <button id="btnExportJSON" class="btn-link" title="Backup all data to file">
+                                <i class="fa-solid fa-download"></i> Backup
+                            </button>
+                            <button id="btnImportJSON" class="btn-link" title="Restore all data from backup file" onclick="triggerImportClick()">
+                                <i class="fa-solid fa-upload"></i> Restore
+                            </button>
+                            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                            <button id="btnExportCSV" class="btn-link" title="Export Excel sheet">
+                                <i class="fa-solid fa-file-csv"></i> Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="logs-list-wrapper">
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-icon"><i class="fa-solid fa-circle-info"></i></div>
+                            <p>No logs available. Add a new transaction above.</p>
+                        </div>
+                        <div class="simple-logs-list" id="simpleLogsList">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Account Balances, Pie Chart & Advisor -->
+            <div class="col-right">
+                <!-- Bank Accounts Widget -->
+                <div class="card accounts-card">
+                    <div class="card-header flex-row">
+                        <h3><i class="fa-solid fa-building-columns"></i> Account Balances</h3>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button class="btn-link" onclick="openAddAccountModal()">
+                                <i class="fa-solid fa-plus"></i> Add Account
+                            </button>
+                            <a href="add-log.html?type=transfer" class="btn-link" style="text-decoration: none;">
+                                <i class="fa-solid fa-money-bill-transfer"></i> Transfer
+                            </a>
+                        </div>
+                    </div>
+                    <div class="accounts-list" id="accountsList">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Spending category Pie Chart -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-chart-pie"></i> Spending Share</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Simple Advisor Tips -->
+                <div class="card advisor-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-info"></i> AI Savings Advisor</h3>
+                    </div>
+                    <div class="advisor-content" id="simpleAdvisorText">
+                        Your personalized savings strategy will appear here.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month-by-Month Savings Report Table -->
+        <div class="card monthly-report-card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-calendar-days"></i> Month-by-Month Savings Report</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-right">Opening Balance</th>
+                            <th class="text-right">Total Inflow (+)</th>
+                            <th class="text-right">Total Outflow (-)</th>
+                            <th class="text-right">Net Savings</th>
+                            <th class="text-center">Savings Rate</th>
+                            <th class="text-right">Closing Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyReportTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Account Modal -->
+    <div id="modal-add-account" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Account</h3>
+                <button class="btn-close-modal" onclick="closeAddAccountModal()">&times;</button>
+            </div>
+            <form id="addAccountForm">
+                <div class="form-group">
+                    <label for="newAccName">Account Name</label>
+                    <input type="text" id="newAccName" placeholder="e.g. ICICI Bank, Paytm Wallet" required>
+                </div>
+                <div class="form-group">
+                    <label for="newAccOwner">Account Holder Name (Owner)</label>
+                    <input type="text" id="newAccOwner" placeholder="e.g. Rajat, Dad, Business" required>
+                </div>
+                <div class="form-group">
+                    <label for="newAccBalance">Initial Balance (INR)</label>
+                    <input type="number" id="newAccBalance" min="0" placeholder="₹ 0.00" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="newAccType">Account Type</label>
+                    <select id="newAccType" required>
+                        <option value="bank">Bank Account</option>
+                        <option value="savings">Savings Account / Vault</option>
+                        <option value="cash">Cash Hand</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-plus"></i> Create Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Category Modal (used by dashboard category additions or quick setups) -->
+    <div id="modal-add-category" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Custom Category</h3>
+                <button class="btn-close-modal" onclick="closeAddCategoryModal()">&times;</button>
+            </div>
+            <form id="addCategoryForm">
+                <div class="form-group">
+                    <label for="newCatName">Category Name</label>
+                    <input type="text" id="newCatName" placeholder="e.g. Subscriptions, Gifts, Investment" required>
+                </div>
+                <div class="form-group">
+                    <label for="newCatType">Category Type</label>
+                    <select id="newCatType" required>
+                        <option value="expense">Expense Category</option>
+                        <option value="income">Income Category</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-plus"></i> Create Category
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JS Logic -->
+    <script src="common.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
