@@ -1088,3 +1088,35 @@ body::after {
     from { opacity: 0; transform: scale(0.96) translateY(4px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* Database Sync Badge & User Profile Styles */
+.badge-sync {
+    transition: var(--transition-fast);
+}
+.badge-sync.synced {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #10B981 !important;
+}
+.badge-sync.syncing {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #F59E0B !important;
+}
+.badge-sync.error {
+    background: rgba(244, 63, 94, 0.1) !important;
+    color: #F43F5E !important;
+}
+.badge-sync.local {
+    background: rgba(100, 116, 139, 0.1) !important;
+    color: #64748B !important;
+}
+.btn-logout {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.btn-logout:hover {
+    color: var(--danger) !important;
+    transform: scale(1.1) rotate(90deg);
+}
+

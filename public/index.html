@@ -21,10 +21,16 @@
     <div id="page-lock" class="page-view">
         <div class="lock-container">
             <div class="lock-logo">
-                <i class="fa-solid fa-lock"></i>
+                <i class="fa-solid fa-scale-balanced"></i>
             </div>
-            <h2 id="lockTitle">Enter Passcode</h2>
-            <p id="lockSubtitle">Secure your financial logs</p>
+            <h2 id="lockTitle">Login to FinFlow</h2>
+            <p id="lockSubtitle">Enter your credentials to access your logs</p>
+            
+            <!-- Username Input Field -->
+            <div class="lock-input-group" style="width: 100%; max-width: 280px; margin: 0 auto 1.25rem;">
+                <input type="text" id="authUsername" placeholder="Enter Username" required
+                       style="width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-family: inherit; font-size: 0.95rem; font-weight: 600; text-align: center; outline: none; transition: var(--transition-fast); background: rgba(255, 255, 255, 0.75); box-shadow: var(--shadow-sm);">
+            </div>
             
             <!-- Pin Dots -->
             <div class="pin-dots">
@@ -50,6 +56,12 @@
                 <button type="button" class="pin-btn delete" onclick="deletePin()"><i class="fa-solid fa-delete-left"></i></button>
             </div>
             <div class="lock-footer" id="lockFooterMessage"></div>
+
+            <!-- Toggle Auth Mode (Register vs Login) -->
+            <div class="auth-toggle-container" style="margin-top: 1.25rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+                <span id="authToggleLabel">New user?</span>
+                <a href="javascript:void(0)" id="authToggleLink" onclick="toggleAuthMode()" style="color: var(--primary); text-decoration: none; margin-left: 0.25rem; border-bottom: 1px dashed var(--primary);">Create Account</a>
+            </div>
         </div>
     </div>
 
@@ -63,8 +75,14 @@
                     <i class="fa-solid fa-scale-balanced"></i>
                     <h2>FinFlow</h2>
                     <span class="badge-app">Easy Tracker</span>
+                    <span id="syncStatusBadge" class="badge-sync" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 20px; margin-left: 0.5rem;"><i class="fa-solid fa-cloud"></i> Synced</span>
                 </div>
                 <div class="header-right">
+                    <div class="user-profile-badge" style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(15, 23, 42, 0.04); padding: 0.35rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; color: var(--text-secondary);">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span id="lblUserDisplay">Guest</span>
+                        <button class="btn-logout" onclick="logoutUser()" title="Logout User" style="background: none; border: none; cursor: pointer; color: var(--danger); padding: 0; font-size: 0.85rem; display: inline-flex; align-items: center; margin-left: 0.25rem; transition: var(--transition-fast);"><i class="fa-solid fa-power-off"></i></button>
+                    </div>
                     <div class="month-selector">
                         <span>Month:</span>
                         <select id="reportMonthSelect">
@@ -110,9 +128,18 @@
                     <div class="card">
                         <div class="card-header flex-row">
                             <h3><i class="fa-solid fa-list-ul"></i> Transaction History</h3>
-                            <button id="btnExportCSV" class="btn-link" title="Export Excel backup file">
-                                <i class="fa-solid fa-file-csv"></i> Excel Download
-                            </button>
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                <button id="btnExportJSON" class="btn-link" title="Backup all data to file">
+                                    <i class="fa-solid fa-download"></i> Backup
+                                </button>
+                                <button id="btnImportJSON" class="btn-link" title="Restore all data from backup file" onclick="triggerImportClick()">
+                                    <i class="fa-solid fa-upload"></i> Restore
+                                </button>
+                                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                                <button id="btnExportCSV" class="btn-link" title="Export Excel sheet">
+                                    <i class="fa-solid fa-file-csv"></i> Excel
+                                </button>
+                            </div>
                         </div>
                         <div class="logs-list-wrapper">
                             <div class="empty-state" id="emptyState">

@@ -1,15 +1,10 @@
 // ==========================================
-// STATE MANAGEMENT & ACCOUNTS INITIALIZATION
+// STATE MANAGEMENT & CONFIGURATION
 // ==========================================
 
 let state = {
     transactions: [],
-    accounts: [
-        { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
-        { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
-        { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 0, type: 'savings' },
-        { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 0, type: 'cash' }
-    ],
+    accounts: [],
     categories: {
         expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
         income: ['Salary', 'Business & Gigs', 'Others']
@@ -28,132 +23,95 @@ const categoryColors = {
     'Transfer': '#6366F1'                   // Indigo for transfers
 };
 
-const LOCAL_STORAGE_KEY = 'finflow_simple_state';
-
 // ==========================================
-// PRE-POPULATED EMPTY AND MOCK DATA TEMPLATES
+// CENTRALIZED REST API GATEWAY
 // ==========================================
-function getInitialEmptyState() {
-    return {
-        accounts: [
-            { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
-            { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
-            { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 0, type: 'savings' },
-            { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 0, type: 'cash' }
-        ],
-        transactions: [],
-        categories: {
-            expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
-            income: ['Salary', 'Business & Gigs', 'Others']
-        },
-        currency: '₹'
+
+async function apiCall(path, method = 'GET', body = null) {
+    const token = localStorage.getItem('finflow_token');
+    const headers = {
+        'Content-Type': 'application/json'
     };
-}
-
-function getDemoMockData() {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonthNum = today.getMonth(); // 0-indexed
-
-    const formatRelativeDate = (monthOffset, day) => {
-        let targetMonth = currentMonthNum + monthOffset;
-        let targetYear = currentYear;
-        if (targetMonth < 0) {
-            targetMonth += 12;
-            targetYear -= 1;
-        } else if (targetMonth > 11) {
-            targetMonth -= 12;
-            targetYear += 1;
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    const options = { method, headers };
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+    
+    try {
+        const res = await fetch(path, options);
+        if (res.status === 401 || res.status === 403) {
+            logoutUser();
+            throw new Error('Session expired. Please login again.');
         }
-        const m = String(targetMonth + 1).padStart(2, '0');
-        const d = String(day).padStart(2, '0');
-        return `${targetYear}-${m}-${d}`;
-    };
-
-    return {
-        accounts: [
-            { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 25000, type: 'bank' },
-            { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 15000, type: 'bank' },
-            { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 50000, type: 'savings' },
-            { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 2000, type: 'cash' }
-        ],
-        categories: {
-            expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
-            income: ['Salary', 'Business & Gigs', 'Others']
-        },
-        transactions: [
-            // Previous Month Income
-            { id: 't1', description: 'Client A Project Payment', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(-1, 1), fromAccount: '', toAccount: 'acc-hdfc' },
-            { id: 't2', description: 'Freelance Design Work', amount: 5500, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(-1, 15), fromAccount: '', toAccount: 'acc-sbi' },
-            
-            // Previous Month Expenses
-            { id: 't3', description: 'Apartment Rent HDFC', amount: 12000, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(-1, 1), fromAccount: 'acc-hdfc', toAccount: '' },
-            { id: 't4', description: 'Weekly Groceries Cash', amount: 2800, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 5), fromAccount: 'acc-cash', toAccount: '' },
-            { id: 't5', description: 'Savings Allocation', amount: 15000, type: 'transfer', category: 'Transfer', date: formatRelativeDate(-1, 10), fromAccount: 'acc-hdfc', toAccount: 'acc-savings' },
-            { id: 't6', description: 'Dining out with Friends', amount: 1600, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(-1, 14), fromAccount: 'acc-sbi', toAccount: '' },
-            { id: 't7', description: 'Online Shopping HDFC', amount: 2500, type: 'expense', category: 'Shopping & Entertainment', date: formatRelativeDate(-1, 20), fromAccount: 'acc-hdfc', toAccount: '' },
-            { id: 't8', description: 'Medicines purchase', amount: 800, type: 'expense', category: 'Others', date: formatRelativeDate(-1, 25), fromAccount: 'acc-cash', toAccount: '' },
-
-            // Current Month Income
-            { id: 't9', description: 'Corporate Job Salary', amount: 45000, type: 'income', category: 'Salary', date: formatRelativeDate(0, 1), fromAccount: '', toAccount: 'acc-hdfc' },
-            { id: 't10', description: 'Consulting Contract Work', amount: 8000, type: 'income', category: 'Business & Gigs', date: formatRelativeDate(0, 4), fromAccount: '', toAccount: 'acc-hdfc' },
-            
-            // Current Month Expenses
-            { id: 't11', description: 'Apartment Rent HDFC', amount: 12500, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 1), fromAccount: 'acc-hdfc', toAccount: '' },
-            { id: 't12', description: 'Weekly Groceries Restock', amount: 3100, type: 'expense', category: 'Food & Groceries', date: formatRelativeDate(0, 3), fromAccount: 'acc-sbi', toAccount: '' },
-            { id: 't13', description: 'Savings Transfer', amount: 10000, type: 'transfer', category: 'Transfer', date: formatRelativeDate(0, 5), fromAccount: 'acc-hdfc', toAccount: 'acc-savings' },
-            { id: 't14', description: 'Fuel Refill Tank', amount: 950, type: 'expense', category: 'Travel', date: formatRelativeDate(0, 5), fromAccount: 'acc-hdfc', toAccount: '' },
-            { id: 't15', description: 'Mobile Recharge Plan', amount: 499, type: 'expense', category: 'Rent & Bills', date: formatRelativeDate(0, 6), fromAccount: 'acc-sbi', toAccount: '' }
-        ],
-        currency: '₹'
-    };
-}
-
-// Load State from storage
-function loadState() {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-        try {
-            state = JSON.parse(saved);
-            state.currency = '₹'; // Guarantee INR symbol
-            
-            // Backward compatibility checks
-            if (!state.accounts || state.accounts.length === 0) {
-                state.accounts = [
-                    { id: 'acc-hdfc', name: 'HDFC Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
-                    { id: 'acc-sbi', name: 'SBI Bank', owner: 'Rajat', initialBalance: 0, type: 'bank' },
-                    { id: 'acc-savings', name: 'Savings Account', owner: 'Rajat', initialBalance: 0, type: 'savings' },
-                    { id: 'acc-cash', name: 'Cash', owner: 'Rajat', initialBalance: 0, type: 'cash' }
-                ];
-                saveState();
-            } else {
-                state.accounts.forEach(acc => {
-                    if (!acc.owner) acc.owner = 'Rajat';
-                });
-                saveState();
-            }
-            
-            if (!state.categories) {
-                state.categories = {
-                    expense: ['Food & Groceries', 'Rent & Bills', 'Travel', 'Shopping & Entertainment', 'Others'],
-                    income: ['Salary', 'Business & Gigs', 'Others']
-                };
-                saveState();
-            }
-        } catch (e) {
-            console.error('Error loading state:', e);
-            state = getInitialEmptyState();
-            saveState();
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP error ${res.status}`);
         }
-    } else {
-        state = getInitialEmptyState();
-        saveState();
+        return await res.json();
+    } catch (e) {
+        console.error(`API Call failed (${path}):`, e);
+        throw e;
     }
 }
 
-// Save state
-function saveState() {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+// Background poll & cache sync
+async function syncStateFromServer() {
+    const syncBadge = document.getElementById('syncStatusBadge');
+    if (syncBadge && syncBadge.className !== 'badge-sync syncing') {
+        syncBadge.className = 'badge-sync syncing';
+        syncBadge.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Syncing...';
+    }
+    
+    try {
+        const [accounts, transactions, categories] = await Promise.all([
+            apiCall('/api/accounts'),
+            apiCall('/api/transactions'),
+            apiCall('/api/categories')
+        ]);
+        
+        state.accounts = accounts;
+        state.transactions = transactions;
+        state.categories = categories;
+        
+        // Cache locally for offline preview fallback
+        localStorage.setItem('finflow_cached_state', JSON.stringify(state));
+        
+        if (syncBadge) {
+            syncBadge.className = 'badge-sync synced';
+            syncBadge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Connected';
+        }
+        
+        // Refresh UI
+        updateAccountDropdowns();
+        updateCategoryOptions();
+        renderAll();
+    } catch (e) {
+        console.error('Error syncing state:', e);
+        if (syncBadge) {
+            syncBadge.className = 'badge-sync error';
+            syncBadge.innerHTML = '<i class="fa-solid fa-cloud-slash"></i> Sync Error';
+        }
+        
+        // Fallback to cache
+        const cached = localStorage.getItem('finflow_cached_state');
+        if (cached) {
+            try {
+                const cachedState = JSON.parse(cached);
+                state.accounts = cachedState.accounts || [];
+                state.transactions = cachedState.transactions || [];
+                state.categories = cachedState.categories || state.categories;
+                
+                updateAccountDropdowns();
+                updateCategoryOptions();
+                renderAll();
+            } catch (err) {
+                console.error('Error parsing cached state:', err);
+            }
+        }
+    }
 }
 
 // Helper: Get Account Name by ID
@@ -175,7 +133,7 @@ function calculateAccountBalances(upToDateStr) {
     
     const balances = {};
     state.accounts.forEach(acc => {
-        balances[acc.id] = acc.initialBalance || 0;
+        balances[acc.id] = acc.initial_balance || 0;
     });
     
     state.transactions.forEach(tx => {
@@ -187,19 +145,19 @@ function calculateAccountBalances(upToDateStr) {
         }
         
         if (tx.type === 'income') {
-            if (balances[tx.toAccount] !== undefined) {
-                balances[tx.toAccount] += tx.amount;
+            if (balances[tx.to_account] !== undefined) {
+                balances[tx.to_account] += tx.amount;
             }
         } else if (tx.type === 'expense') {
-            if (balances[tx.fromAccount] !== undefined) {
-                balances[tx.fromAccount] -= tx.amount;
+            if (balances[tx.from_account] !== undefined) {
+                balances[tx.from_account] -= tx.amount;
             }
         } else if (tx.type === 'transfer') {
-            if (balances[tx.fromAccount] !== undefined) {
-                balances[tx.fromAccount] -= tx.amount;
+            if (balances[tx.from_account] !== undefined) {
+                balances[tx.from_account] -= tx.amount;
             }
-            if (balances[tx.toAccount] !== undefined) {
-                balances[tx.toAccount] += tx.amount;
+            if (balances[tx.to_account] !== undefined) {
+                balances[tx.to_account] += tx.amount;
             }
         }
     });
@@ -337,7 +295,7 @@ function renderAll() {
     // AI Advice Generator
     renderAdvisorStrategy(monthlyIncome, monthlyExpenses, savingsRate, categorySums, fmt);
 
-    // Month-by-Month Savings Table Renderer
+    // Month-by-Month Savings Report Table
     renderMonthlyReportTable();
 }
 
@@ -472,11 +430,11 @@ function renderTransactionsList(transactions, formatFn) {
 
         let accountFlowText = '';
         if (tx.type === 'income') {
-            accountFlowText = `to ${getAccountName(tx.toAccount)}`;
+            accountFlowText = `to ${getAccountName(tx.to_account)}`;
         } else if (tx.type === 'expense') {
-            accountFlowText = `from ${getAccountName(tx.fromAccount)}`;
+            accountFlowText = `from ${getAccountName(tx.from_account)}`;
         } else if (tx.type === 'transfer') {
-            accountFlowText = `${getAccountName(tx.fromAccount)} → ${getAccountName(tx.toAccount)}`;
+            accountFlowText = `${getAccountName(tx.from_account)} → ${getAccountName(tx.to_account)}`;
         }
 
         item.innerHTML = `
@@ -500,11 +458,14 @@ function renderTransactionsList(transactions, formatFn) {
 }
 
 // Delete transaction
-window.deleteLog = function(id) {
+window.deleteLog = async function(id) {
     if (confirm('Are you sure you want to delete this transaction entry?')) {
-        state.transactions = state.transactions.filter(tx => tx.id !== id);
-        saveState();
-        renderAll();
+        try {
+            await apiCall(`/api/transactions/${id}`, 'DELETE');
+            await syncStateFromServer();
+        } catch (e) {
+            alert('Error deleting transaction: ' + e.message);
+        }
     }
 };
 
@@ -622,6 +583,7 @@ function renderAdvisorStrategy(income, expenses, rate, categorySums, fmt) {
 const logCategorySelect = document.getElementById('logCategory');
 
 function updateCategoryOptions() {
+    if (!logCategorySelect) return;
     const type = document.getElementById('logType').value;
     const list = state.categories[type] || [];
     
@@ -718,26 +680,24 @@ window.closeAddAccountModal = function() {
     }
 };
 
-window.deleteAccount = function(accId) {
+window.deleteAccount = async function(accId) {
     const acc = state.accounts.find(a => a.id === accId);
     if (!acc) return;
     
     if (confirm(`Are you sure you want to delete the account "${acc.name}"? All associated transactions will also be permanently deleted!`)) {
-        // Delete the account
-        state.accounts = state.accounts.filter(a => a.id !== accId);
-        // Delete associated transactions
-        state.transactions = state.transactions.filter(tx => tx.fromAccount !== accId && tx.toAccount !== accId);
-        
-        saveState();
-        updateAccountDropdowns();
-        renderAll();
+        try {
+            await apiCall(`/api/accounts/${accId}`, 'DELETE');
+            await syncStateFromServer();
+        } catch (e) {
+            alert('Error deleting account: ' + e.message);
+        }
     }
 };
 
 // Form listener for new account addition
 const addAccountForm = document.getElementById('addAccountForm');
 if (addAccountForm) {
-    addAccountForm.addEventListener('submit', function(e) {
+    addAccountForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const name = document.getElementById('newAccName').value.trim();
@@ -750,30 +710,20 @@ if (addAccountForm) {
             return;
         }
         
-        // Check duplicate names (scoped by owner for uniqueness)
-        const exists = state.accounts.some(a => a.name.toLowerCase() === name.toLowerCase() && (a.owner || '').toLowerCase() === owner.toLowerCase());
-        if (exists) {
-            alert('An account with this name and owner already exists!');
-            return;
-        }
-        
         const newAccount = {
-            id: 'acc-' + Date.now(),
             name,
             owner,
             initialBalance,
             type
         };
         
-        state.accounts.push(newAccount);
-        saveState();
-        
-        // Refresh UI dropdown selectors and render balances
-        updateAccountDropdowns();
-        renderAll();
-        
-        // Close Modal
-        closeAddAccountModal();
+        try {
+            await apiCall('/api/accounts', 'POST', newAccount);
+            await syncStateFromServer();
+            closeAddAccountModal();
+        } catch (e) {
+            alert('Failed to create account: ' + e.message);
+        }
     });
 }
 
@@ -798,7 +748,7 @@ window.closeAddCategoryModal = function() {
 
 const addCategoryForm = document.getElementById('addCategoryForm');
 if (addCategoryForm) {
-    addCategoryForm.addEventListener('submit', function(e) {
+    addCategoryForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const name = document.getElementById('newCatName').value.trim();
@@ -809,41 +759,27 @@ if (addCategoryForm) {
             return;
         }
         
-        // Check duplicates
-        const exists = state.categories[type].some(c => c.toLowerCase() === name.toLowerCase());
-        if (exists) {
-            alert('This category already exists!');
-            return;
+        try {
+            const addedCat = await apiCall('/api/categories', 'POST', { name, type });
+            await syncStateFromServer();
+            
+            // Select newly created category
+            const logCategory = document.getElementById('logCategory');
+            if (logCategory) {
+                logCategory.value = addedCat.name;
+            }
+            
+            closeAddCategoryModal();
+        } catch (e) {
+            alert('Failed to create category: ' + e.message);
         }
-        
-        // Add to state
-        state.categories[type].push(name);
-        
-        // Assign a random pastel color for charts
-        const colors = ['#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#10B981', '#34D399', '#6366F1', '#06B6D4', '#F43F5E', '#14B8A6'];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        categoryColors[name] = randomColor;
-        
-        saveState();
-        
-        // Refresh form categories
-        updateCategoryOptions();
-        
-        // Select newly created category
-        const logCategory = document.getElementById('logCategory');
-        if (logCategory) {
-            logCategory.value = name;
-        }
-        
-        // Close modal
-        closeAddCategoryModal();
     });
 }
 
-// Form submit handler
+// Form submit handler for new transaction
 const form = document.getElementById('simpleLogForm');
 if (form) {
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const type = document.getElementById('logType').value;
@@ -876,7 +812,6 @@ if (form) {
         }
 
         const newLog = {
-            id: 't-' + Date.now(),
             description,
             amount,
             type,
@@ -886,16 +821,19 @@ if (form) {
             toAccount
         };
 
-        state.transactions.push(newLog);
-        saveState();
-        renderAll();
+        try {
+            await apiCall('/api/transactions', 'POST', newLog);
+            await syncStateFromServer();
+            
+            // Reset form inputs
+            document.getElementById('logAmount').value = '';
+            document.getElementById('logDesc').value = '';
 
-        // Reset form inputs
-        document.getElementById('logAmount').value = '';
-        document.getElementById('logDesc').value = '';
-
-        // Navigate back to dashboard
-        showPage('dashboard');
+            // Navigate back to dashboard
+            showPage('dashboard');
+        } catch (e) {
+            alert('Failed to record transaction: ' + e.message);
+        }
     });
 }
 
@@ -904,20 +842,26 @@ if (form) {
 // ==========================================
 
 // Load demo mock data
-document.getElementById('btnLoadDemo').addEventListener('click', function() {
+document.getElementById('btnLoadDemo').addEventListener('click', async function() {
     if (confirm('Load demo data? This will overwrite your current logs.')) {
-        state = getDemoMockData();
-        saveState();
-        renderAll();
+        try {
+            await apiCall('/api/demo', 'POST');
+            await syncStateFromServer();
+        } catch (e) {
+            alert('Failed to load demo data: ' + e.message);
+        }
     }
 });
 
 // Reset app
-document.getElementById('btnResetAll').addEventListener('click', function() {
+document.getElementById('btnResetAll').addEventListener('click', async function() {
     if (confirm('Are you sure you want to delete all logs and reset the app?')) {
-        state = getInitialEmptyState();
-        saveState();
-        renderAll();
+        try {
+            await apiCall('/api/reset', 'POST');
+            await syncStateFromServer();
+        } catch (e) {
+            alert('Failed to reset app: ' + e.message);
+        }
     }
 });
 
@@ -933,8 +877,8 @@ document.getElementById('btnExportCSV').addEventListener('click', function() {
 
     state.transactions.forEach(t => {
         const desc = t.description.replace(/,/g, ' ');
-        const fromName = getAccountName(t.fromAccount);
-        const toName = getAccountName(t.toAccount);
+        const fromName = getAccountName(t.from_account);
+        const toName = getAccountName(t.to_account);
         csvContent += `${t.date},${desc},${t.type},${t.category},${t.amount},${fromName},${toName}\n`;
     });
 
@@ -977,26 +921,57 @@ window.showPage = function(pageId) {
 };
 
 // ==========================================
-// PASSCODE SECURITY LOCK SCREEN LOGIC
+// SECURITY LOGIN & REGISTRATION LOCK SCREEN
 // ==========================================
 let pinBuffer = '';
-let isSettingPasscode = false;
+let authMode = 'login'; // 'login' or 'register'
 
-function setupLockScreenState() {
-    const savedPin = localStorage.getItem('finflow_passcode');
+window.toggleAuthMode = function() {
+    authMode = authMode === 'login' ? 'register' : 'login';
     const lockTitle = document.getElementById('lockTitle');
     const lockSubtitle = document.getElementById('lockSubtitle');
+    const authToggleLabel = document.getElementById('authToggleLabel');
+    const authToggleLink = document.getElementById('authToggleLink');
+    
+    if (authMode === 'login') {
+        if (lockTitle) lockTitle.textContent = 'Login to FinFlow';
+        if (lockSubtitle) lockSubtitle.textContent = 'Enter your credentials to access your logs';
+        if (authToggleLabel) authToggleLabel.textContent = 'New user?';
+        if (authToggleLink) authToggleLink.textContent = 'Create Account';
+    } else {
+        if (lockTitle) lockTitle.textContent = 'Register Account';
+        if (lockSubtitle) lockSubtitle.textContent = 'Choose a username and 4-digit passcode';
+        if (authToggleLabel) authToggleLabel.textContent = 'Already have an account?';
+        if (authToggleLink) authToggleLink.textContent = 'Login';
+    }
+    pinBuffer = '';
+    updatePinDots();
+    const footerMsg = document.getElementById('lockFooterMessage');
+    if (footerMsg) footerMsg.textContent = '';
+};
 
-    if (!savedPin) {
-        isSettingPasscode = true;
-        if (lockTitle) lockTitle.textContent = 'Set a Passcode';
-        if (lockSubtitle) lockSubtitle.textContent = 'Choose a 4-digit PIN to lock your reports';
+function setupLockScreenState() {
+    const token = localStorage.getItem('finflow_token');
+    const username = localStorage.getItem('finflow_username');
+
+    if (!token) {
+        authMode = 'login';
+        const lockTitle = document.getElementById('lockTitle');
+        const lockSubtitle = document.getElementById('lockSubtitle');
+        const authToggleLabel = document.getElementById('authToggleLabel');
+        const authToggleLink = document.getElementById('authToggleLink');
+        
+        if (lockTitle) lockTitle.textContent = 'Login to FinFlow';
+        if (lockSubtitle) lockSubtitle.textContent = 'Enter your credentials to access your logs';
+        if (authToggleLabel) authToggleLabel.textContent = 'New user?';
+        if (authToggleLink) authToggleLink.textContent = 'Create Account';
+        
+        document.getElementById('authUsername').value = '';
         showPage('lock');
     } else {
-        isSettingPasscode = false;
-        if (lockTitle) lockTitle.textContent = 'Enter Passcode';
-        if (lockSubtitle) lockSubtitle.textContent = 'Secure your financial logs';
-        showPage('lock');
+        document.getElementById('lblUserDisplay').textContent = username || 'User';
+        showPage('dashboard');
+        syncStateFromServer();
     }
     updatePinDots();
 }
@@ -1042,45 +1017,76 @@ window.deletePin = function() {
     if (footerMsg) footerMsg.textContent = '';
 };
 
-function checkPinEntry() {
+async function checkPinEntry() {
+    const usernameInput = document.getElementById('authUsername');
     const footerMsg = document.getElementById('lockFooterMessage');
-
-    if (isSettingPasscode) {
-        localStorage.setItem('finflow_passcode', pinBuffer);
-        alert('Passcode set successfully! Remember this passcode.');
-        isSettingPasscode = false;
+    
+    if (!usernameInput || !usernameInput.value.trim()) {
+        if (footerMsg) {
+            footerMsg.textContent = 'Please enter username first!';
+            footerMsg.style.color = 'var(--danger)';
+        }
         pinBuffer = '';
         updatePinDots();
+        return;
+    }
+    
+    const username = usernameInput.value.trim();
+    const pin = pinBuffer;
+    
+    if (footerMsg) {
+        footerMsg.textContent = authMode === 'login' ? 'Logging in...' : 'Registering...';
+        footerMsg.style.color = 'var(--text-secondary)';
+    }
+    
+    try {
+        const path = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+        const data = await apiCall(path, 'POST', { username, pin });
+        
+        // Save auth data
+        localStorage.setItem('finflow_token', data.token);
+        localStorage.setItem('finflow_username', data.user.username);
+        localStorage.setItem('finflow_user_id', data.user.id);
+        
+        // Setup User display
+        document.getElementById('lblUserDisplay').textContent = data.user.username;
+        
+        pinBuffer = '';
+        updatePinDots();
+        if (footerMsg) footerMsg.textContent = '';
+        
+        // Sync & render
+        await syncStateFromServer();
         showPage('dashboard');
-    } else {
-        const correctPin = localStorage.getItem('finflow_passcode');
-        if (pinBuffer === correctPin) {
-            pinBuffer = '';
-            updatePinDots();
-            showPage('dashboard');
-        } else {
-            if (footerMsg) footerMsg.textContent = 'Incorrect Passcode. Try Again!';
-            pinBuffer = '';
-            updatePinDots();
+    } catch (e) {
+        if (footerMsg) {
+            footerMsg.textContent = e.message || 'Authentication failed.';
+            footerMsg.style.color = 'var(--danger)';
         }
+        pinBuffer = '';
+        updatePinDots();
     }
 }
+
+window.logoutUser = function() {
+    localStorage.removeItem('finflow_token');
+    localStorage.removeItem('finflow_username');
+    localStorage.removeItem('finflow_user_id');
+    localStorage.removeItem('finflow_cached_state');
+    
+    state.transactions = [];
+    state.accounts = [];
+    
+    document.getElementById('lblUserDisplay').textContent = 'Guest';
+    setupLockScreenState();
+};
 
 // ==========================================
 // APP STARTUP INITIALIZATION
 // ==========================================
 function init() {
-    // Load local storage
-    loadState();
-
-    // Check passcode setup
+    // Check session login state
     setupLockScreenState();
-
-    // Populate dropdown selectors with active bank accounts
-    updateAccountDropdowns();
-
-    // Set dynamic dropdown categories options based on default type selected
-    setFormType('expense');
 
     // Default logging date to Today
     const todayStr = new Date().toISOString().split('T')[0];
@@ -1089,8 +1095,15 @@ function init() {
         dateInput.value = todayStr;
     }
 
-    // Bind selector and render first screen
-    renderAll();
+    // Set form defaults
+    setFormType('expense');
+
+    // Auto sync state in background every 15 seconds if logged in
+    setInterval(() => {
+        if (localStorage.getItem('finflow_token')) {
+            syncStateFromServer();
+        }
+    }, 15000);
 }
 
 function escapeHtml(text) {
